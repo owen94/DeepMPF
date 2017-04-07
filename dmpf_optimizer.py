@@ -100,67 +100,48 @@ class dmpf_optimizer(object):
             hidden_samples = activation[2]
             self.input = T.concatenate((self.input, hidden_samples),axis = 1)
 
-            self.sample_prob = T.prod(activation[1], axis = 1)
-            self.sample_prob = self.sample_prob / T.sum(self.sample_prob)
+        z = 1/2 - self.input
+        energy_difference = z * (T.dot(self.input,self.W)+ self.b.reshape([1,-1]))
 
-            z = 1/2 - self.input
-            energy_difference = z * (T.dot(self.input,self.W)+ self.b.reshape([1,-1]))
+        # self.sample_prob = self.sample_prob.reshape((1,-1)).T
+        # k = theano.shared(value= (np.asarray(np.ones(self.num_neuron),dtype=theano.config.floatX)).reshape((1,-1)))
+        # self.sample_prob = T.dot(self.sample_prob, k)
+        cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
+        cost_weight = 0.5 * decay * T.sum(self.W**2)
+        cost += cost_weight
 
-            # self.sample_prob = self.sample_prob.reshape((1,-1)).T
-            # k = theano.shared(value= (np.asarray(np.ones(self.num_neuron),dtype=theano.config.floatX)).reshape((1,-1)))
-            # self.sample_prob = T.dot(self.sample_prob, k)
-            #cost = (self.epsilon) * T.sum(T.exp(energy_difference)*self.sample_prob)
-            cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
-            W_grad = T.grad(cost=cost, wrt = self.W,consider_constant=[self.input])
-            b_grad = T.grad(cost=cost, wrt=self.b,consider_constant=[self.input])
-            # W_grad *= self.zero_grad
-            # g_params = [W_grad, b_grad]
-            # updates = adam(g_params, self.params, learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-08)
-            ############################################################
+        h = z * T.exp(energy_difference)
+        W_grad = (T.dot(h.T,self.input)+T.dot(self.input.T,h))*self.epsilon/self.batch_sz
+        b_grad = T.mean(h,axis=0)*self.epsilon
+        decay_grad = decay*self.W
+        W_grad += decay_grad
 
-        else:
-            z = 1/2 - self.input
-            energy_difference = z * (T.dot(self.input,self.W)+ self.b.reshape([1,-1]))
+        ###############   Add  sparsity Here ###########################
 
-            # self.sample_prob = self.sample_prob.reshape((1,-1)).T
-            # k = theano.shared(value= (np.asarray(np.ones(self.num_neuron),dtype=theano.config.floatX)).reshape((1,-1)))
-            # self.sample_prob = T.dot(self.sample_prob, k)
-            cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
-            cost_weight = 0.5 * decay * T.sum(self.W**2)
-            cost += cost_weight
+        raw = self.input[:,:self.visible_units]
+        activation = self.propup(raw)[1]
+        rho = T.mean(activation,axis=0)  # rho is the current
+        self.rho = rho * (1 - sparse_decay) + sparse_decay * self.rho
 
-            h = z * T.exp(energy_difference)
-            W_grad = (T.dot(h.T,self.input)+T.dot(self.input.T,h))*self.epsilon/self.batch_sz
-            b_grad = T.mean(h,axis=0)*self.epsilon
-            decay_grad = decay*self.W
-            W_grad += decay_grad
+        cost_kl = beta*T.sum(sparsity* T.log(sparsity/self.rho)+(1 - sparsity)*T.log((1 - sparsity)/(1 - self.rho)))
 
-            ###############   Add  sparsity Here ###########################
+        KL = beta*((-sparsity/self.rho) + ((1 - sparsity)/(1 - self.rho)))
+        kl_b_grad = KL*activation*(1-activation)
 
-            raw = self.input[:,:self.visible_units]
-            activation = self.propup(raw)[1]
-            rho = T.mean(activation,axis=0)  # rho is the current
-            self.rho = rho * (1 - sparse_decay) + sparse_decay * self.rho
+        KL_grad = T.dot(raw.T, kl_b_grad)
 
-            cost_kl = beta*T.sum(sparsity* T.log(sparsity/self.rho)+(1 - sparsity)*T.log((1 - sparsity)/(1 - self.rho)))
+        a = theano.shared(value = np.asarray(np.zeros((self.visible_units,self.visible_units)),dtype=theano.config.floatX)
+                          , borrow = True)
+        b = theano.shared(value = np.asarray(np.zeros((self.hidden_units,self.hidden_units)),dtype=theano.config.floatX)
+                          , borrow = True)
+        kl_grad1 = T.concatenate((a, KL_grad),axis=1)
+        kl_grad2 = T.concatenate((KL_grad.T, b),axis=1)
+        kl_w_grad = T.concatenate((kl_grad1,kl_grad2),axis=0)
+        ##########################################################
 
-            KL = beta*((-sparsity/self.rho) + ((1 - sparsity)/(1 - self.rho)))
-            kl_b_grad = KL*activation*(1-activation)
-
-            KL_grad = T.dot(raw.T, kl_b_grad)
-
-            a = theano.shared(value = np.asarray(np.zeros((self.visible_units,self.visible_units)),dtype=theano.config.floatX)
-                              , borrow = True)
-            b = theano.shared(value = np.asarray(np.zeros((self.hidden_units,self.hidden_units)),dtype=theano.config.floatX)
-                              , borrow = True)
-            kl_grad1 = T.concatenate((a, KL_grad),axis=1)
-            kl_grad2 = T.concatenate((KL_grad.T, b),axis=1)
-            kl_w_grad = T.concatenate((kl_grad1,kl_grad2),axis=0)
-            ##########################################################
-
-            cost += cost_kl
-            W_grad += (kl_w_grad/self.batch_sz)
-            b_grad = T.inc_subtensor(b_grad[self.visible_units:], T.mean(kl_b_grad,axis=0))
+        cost += cost_kl
+        W_grad += (kl_w_grad/self.batch_sz)
+        b_grad = T.inc_subtensor(b_grad[self.visible_units:], T.mean(kl_b_grad,axis=0))
 
         W_grad *= self.zero_grad
         grads = [W_grad,b_grad]

@@ -225,14 +225,18 @@ class HiddenLayer(object):
             if activation == theano.tensor.nnet.sigmoid:
                 W_values *= 4
 
-            W = theano.shared(value=W_values, name='W', borrow=True)
+            self.W = theano.shared(value=W_values, name='W', borrow=True)
+
+        else:
+            self.W = theano.shared(value=W, name='W', borrow=True)
+
 
         if b is None:
             b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
-            b = theano.shared(value=b_values, name='b', borrow=True)
+            self.b = theano.shared(value=b_values, name='b', borrow=True)
+        else:
+            self.b = theano.shared(value=b, name='b', borrow=True)
 
-        self.W = W
-        self.b = b
 
         lin_output = T.dot(input, self.W) + self.b
         self.output = (

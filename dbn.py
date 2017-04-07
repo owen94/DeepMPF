@@ -37,6 +37,7 @@ class dbn(object):
                 W = None,
                 b = None,
                 input = self.x[i],
+                explicit_EM= True,
                 batch_sz = 40)
 
             self.dmpf_layers.append(RBM)
@@ -46,9 +47,9 @@ class dbn(object):
 
 
     def train_a_rbm(self, rbm, i, lr = 0.001, decay = 0.0001, sparsity = 0.1, beta= 0.01, sparsity_decay = 0.9,
-                    dataset = None):
+                    dataset = None, epoches = 300):
 
-        epoches = 500
+        epoches = epoches
         in_epoch = 1
         path = '../deep/rbm_' + str(rbm.visible_units) + '_' + str(rbm.hidden_units) + '/lr_' + str(lr) + \
                '/decay_' + str(decay) + '/sparsity_' + str(sparsity) +  '/beta_' + str(beta)
@@ -157,30 +158,24 @@ class dbn(object):
 
             return save_hidden
 
-    def pretrain(self,lr = 0.001, decay = 0.0001, sparsity = 0.1, beta= 0.01, sparsity_decay = 0.9 ):
+    def pretrain(self,lr = 0.001, decay = 0.0001, sparsity = 0.1, beta= 0.01, sparsity_decay = 0.9, epoches = 300 ):
 
         i = 0
         save_hidden = None
 
         for rbm in self.dmpf_layers:
 
-
-
             print('Pretraining the %d th RBM' % (i+1) )
 
             if i == 0:
                 save_hidden = self.train_a_rbm(rbm=rbm, i = i, lr = lr, decay = decay, sparsity = sparsity,
-                                               beta= beta, sparsity_decay = sparsity_decay)
+                                               beta= beta, sparsity_decay = sparsity_decay,epoches=epoches)
             else:
                 save_hidden = self.train_a_rbm(rbm=rbm,i = i, lr = lr, decay = decay, sparsity = sparsity,
-                                               beta= beta, sparsity_decay = sparsity_decay, dataset=save_hidden)
+                                               beta= beta, sparsity_decay = sparsity_decay, dataset=save_hidden,
+                                               epoches= epoches)
             i += 1
-
-
             print(save_hidden)
-
-
-
 
     def build_classifier(self):
 
@@ -240,8 +235,6 @@ class dbn(object):
         # symbolic variable that points to the number of errors made on the
         # minibatch given by self.x and self.y
         self.errors = self.logLayer.errors(self.y)
-
-
 
     def fine_tuning(self, datasets, batch_size, learning_rate):
 
@@ -318,23 +311,21 @@ class dbn(object):
 
 
 
-def train_depp_rbm():
+def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoches= 300, batch_size = 40 ):
 
-    epoches = 500
-    lr = 0.001
-    decay = 0.0001
-    sparsity = 0.1
-    beta= 0
-    sparsity_decay = 0.9
-    batch_size = 40
-
-
-    hidden_list = [196, 100]
+    epoches = epoches
+    lr = lr
+    decay = decay
+    sparsity = sparsity
+    beta= beta
+    sparsity_decay = sparsity_decay
+    batch_size = batch_size
+    hidden_list = hidden_list
 
 
     deep_belief_network = dbn(n_ins= 784, hidden_layers_sizes=hidden_list,n_outs=10,batch_sz=40)
 
-    deep_belief_network.pretrain(lr=lr,decay=decay,sparsity=sparsity,beta=beta,sparsity_decay=sparsity_decay)
+    deep_belief_network.pretrain(lr=lr,decay=decay,sparsity=sparsity,beta=beta,sparsity_decay=sparsity_decay, epoches=epoches)
 
     deep_belief_network.build_classifier()
 
@@ -367,6 +358,26 @@ def train_depp_rbm():
 
 
 
-train_depp_rbm()
+if __name__ == '__main__':
+
+    train_deep_rbm(lr=0.001,decay=0.0001,hidden_list=[196,100],
+                                      beta=0,sparsity=0.1,sparsity_decay=0.9, epoches=300)
+
+    # lr_list = [0.001, 0.0001]
+    # decay_list = [0.0001, 0.001, 0.00001]
+    # sparsity_list = [0.1, 0.2, 0.05]
+    # beta_list = [0, 0.01, 0.1]
+    # sparsity_decay_list = [0.9, 0.99]
+    # hidden_list_list = [[196, 100], [196, 64]]
+    # epoches = 300
+    #
+    # for sparsity_decay in sparsity_decay_list:
+    #     for lr in lr_list:
+    #         for hidden_list in hidden_list_list:
+    #             for decay in decay_list:
+    #                 for beta in beta_list:
+    #                     for sparsity in sparsity_list:
+    #                         train_deep_rbm(lr=lr,decay=decay,hidden_list=hidden_list,
+    #                                        beta=beta,sparsity=sparsity,sparsity_decay=sparsity_decay, epoches=epoches)
 
 
