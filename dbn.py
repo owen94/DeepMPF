@@ -45,7 +45,8 @@ class dbn(object):
 
 
 
-    def train_a_rbm(self, rbm, i, lr = 0.001, decay = 0.0001, sparsity = 0.1, beta= 0.01, sparsity_decay = 0.9, dataset = None):
+    def train_a_rbm(self, rbm, i, lr = 0.001, decay = 0.0001, sparsity = 0.1, beta= 0.01, sparsity_decay = 0.9,
+                    dataset = None):
 
         epoches = 500
         in_epoch = 1
@@ -55,97 +56,104 @@ class dbn(object):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        index = T.lscalar('index')
-
-        if dataset is None:
-            data = load_mnist()
-        else:
-            data = np.load(dataset) ##  A rbm should return the activations in the hidden layer as the
-            # input to the next rbm. Here we use .npy to save it.
-
-        visible_units = data.shape[1]
-        num_samples = data.shape[0]
-
-        num_batches = num_samples // self.batch_sz
-
-        cost,updates = rbm.get_dmpf_cost(
-            learning_rate= lr,
-            decay= decay,
-            sparsity= sparsity,
-            beta= beta,
-            sparse_decay= sparsity_decay)
-
-        num_units = visible_units + rbm.hidden_units
-
-        new_data  = theano.shared(value=np.asarray(np.zeros((data.shape[0],num_units)), dtype=theano.config.floatX),
-                                  name = 'train',borrow = True)
-
-        train_mpf = theano.function(
-            [index],
-            cost,
-            updates=updates,
-            givens={
-             self.x[i]: new_data[index * self.batch_sz: (index + 1) * self.batch_sz],
-                },
-        #on_unused_input='warn',
-            )
-
-        #############  Start Training #########################
-        mean_epoch_error = []
-
-        start_time = timeit.default_timer()
-
-        for em_epoch in range(epoches):
-
-            binary_data = np.random.binomial(n=1, p = data)
-
-            W = rbm.W.get_value(borrow = True)
-            b = rbm.b.get_value(borrow = True)
-
-            prop_W = W[:visible_units, visible_units:]
-            prop_b = b[visible_units:]
-            activations, sample_data = get_new_data(binary_data,prop_W,prop_b)
-            new_data.set_value(np.asarray(sample_data, dtype=theano.config.floatX))
-
-            for mpf_epoch in range(in_epoch):
-                mean_cost = []
-                for batch_index in range(num_batches):
-                    mean_cost += [train_mpf(batch_index)]
-                mean_epoch_error += [np.mean(mean_cost)]
-            print('The cost for mpf in epoch %d is %f'% (em_epoch,mean_epoch_error[-1]))
-
-
-            if int(em_epoch+1) % 50 ==0:
-
-                saveName = path + '/weights_' + str(em_epoch) + '.png'
-                tile_shape = (int(np.sqrt(rbm.hidden_units)), int(np.sqrt(rbm.hidden_units)))
-                image_shape = (int(np.sqrt(visible_units)), int(np.sqrt(visible_units)))
-
-                #displayNetwork(W1.T,saveName=saveName)
-
-                image = Image.fromarray(
-                    tile_raster_images(  X=(rbm.W.get_value(borrow = True)[:visible_units,visible_units:]).T,
-                            img_shape=image_shape,
-                            tile_shape=tile_shape,
-                            tile_spacing=(1, 1)
-                        )
-                        )
-                image.save(saveName)
-                W = rbm.W.get_value(borrow = True)
-                W1 = W[:visible_units,visible_units:]
-                b1 = rbm.b.get_value(borrow = True)
-
-                saveName_w = path + '/weights_' + str(em_epoch) + '.npy'
-                saveName_b = path + '/bias_' + str(em_epoch) + '.npy'
-                np.save(saveName_w,W1)
-                np.save(saveName_b,b1)
-
-        hidden_activations = rbm.propup(vis=data)[1]
-
         save_hidden = path + '/hidden_act.npy'
-        np.save(save_hidden, hidden_activations)
 
-        return save_hidden
+        if os.path.exists(save_hidden):
+            print('This RBM is already trained before.')
+            return save_hidden
+
+        else:
+            index = T.lscalar('index')
+
+            if dataset is None:
+                data = load_mnist()
+            else:
+                data = np.load(dataset) ##  A rbm should return the activations in the hidden layer as the
+                # input to the next rbm. Here we use .npy to save it.
+                print(data.shape)
+
+            visible_units = data.shape[1]
+            num_samples = data.shape[0]
+
+            num_batches = num_samples // self.batch_sz
+
+            cost,updates = rbm.get_dmpf_cost(
+                learning_rate= lr,
+                decay= decay,
+                sparsity= sparsity,
+                beta= beta,
+                sparse_decay= sparsity_decay)
+
+            num_units = visible_units + rbm.hidden_units
+
+            new_data  = theano.shared(value=np.asarray(np.zeros((data.shape[0],num_units)), dtype=theano.config.floatX),
+                                      name = 'train',borrow = True)
+
+            train_mpf = theano.function(
+                [index],
+                cost,
+                updates=updates,
+                givens={
+                 self.x[i]: new_data[index * self.batch_sz: (index + 1) * self.batch_sz],
+                    },
+            #on_unused_input='warn',
+                )
+
+            #############  Start Training #########################
+            mean_epoch_error = []
+
+            start_time = timeit.default_timer()
+
+            for em_epoch in range(epoches):
+
+
+                binary_data = np.random.binomial(n=1, p = data)
+
+                W = rbm.W.get_value(borrow = True)
+                b = rbm.b.get_value(borrow = True)
+
+                prop_W = W[:visible_units, visible_units:]
+                prop_b = b[visible_units:]
+                activations, sample_data = get_new_data(binary_data,prop_W,prop_b)
+                new_data.set_value(np.asarray(sample_data, dtype=theano.config.floatX))
+
+                for mpf_epoch in range(in_epoch):
+                    mean_cost = []
+                    for batch_index in range(num_batches):
+                        mean_cost += [train_mpf(batch_index)]
+                    mean_epoch_error += [np.mean(mean_cost)]
+                print('The cost for mpf in epoch %d is %f'% (em_epoch,mean_epoch_error[-1]))
+
+
+                if int(em_epoch+1) % 50 ==0:
+
+                    saveName = path + '/weights_' + str(em_epoch) + '.png'
+                    tile_shape = (int(np.sqrt(rbm.hidden_units)), int(np.sqrt(rbm.hidden_units)))
+                    image_shape = (int(np.sqrt(visible_units)), int(np.sqrt(visible_units)))
+
+                    #displayNetwork(W1.T,saveName=saveName)
+
+                    image = Image.fromarray(
+                        tile_raster_images(  X=(rbm.W.get_value(borrow = True)[:visible_units,visible_units:]).T,
+                                img_shape=image_shape,
+                                tile_shape=tile_shape,
+                                tile_spacing=(1, 1)
+                            )
+                            )
+                    image.save(saveName)
+                    W = rbm.W.get_value(borrow = True)
+                    W1 = W[:visible_units,visible_units:]
+                    b1 = rbm.b.get_value(borrow = True)
+
+                    saveName_w = path + '/weights_' + str(em_epoch) + '.npy'
+                    saveName_b = path + '/bias_' + str(em_epoch) + '.npy'
+                    np.save(saveName_w,W1)
+                    np.save(saveName_b,b1)
+
+            hidden_activations = rbm.np_propup(vis=data)
+            np.save(save_hidden, hidden_activations)
+
+            return save_hidden
 
     def pretrain(self,lr = 0.001, decay = 0.0001, sparsity = 0.1, beta= 0.01, sparsity_decay = 0.9 ):
 

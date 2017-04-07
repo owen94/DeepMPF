@@ -174,6 +174,11 @@ class dmpf_optimizer(object):
                                  + self.b[self.visible_units:]
         return [pre_sigmoid_activation, T.nnet.sigmoid(pre_sigmoid_activation)]
 
+    def np_propup(self, vis):
+        pre_sigmoid_activation = np.dot(vis, self.W.get_value(borrow = True)[:self.visible_units,self.visible_units:]) \
+                                 + self.b.get_value(borrow = True)[self.visible_units:]
+        return sigmoid(pre_sigmoid_activation)
+
     def sample_h_given_v(self, v0_sample):
         pre_sigmoid_h1, h1_mean = self.propup(v0_sample)
         h1_sample = self.theano_rng.binomial(size=h1_mean.shape,
