@@ -245,9 +245,9 @@ class dbn(object):
 
         # compute number of minibatches for training, validation and testing
         n_valid_batches = valid_set_x.get_value(borrow=True).shape[0]
-        n_valid_batches /= batch_size
+        n_valid_batches = n_valid_batches // batch_size
         n_test_batches = test_set_x.get_value(borrow=True).shape[0]
-        n_test_batches /= batch_size
+        n_test_batches = n_test_batches // batch_size
 
         index = T.lscalar('index')  # index to a [mini]batch
 
@@ -332,7 +332,7 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
     dataset = load_data('mnist.pkl.gz')
     train_fn, valid_model, test_model = deep_belief_network.fine_tuning(datasets= dataset,
                                                                         batch_size= batch_size, learning_rate=lr)
-    n_train_batches = dataset[0][0] // batch_size
+    n_train_batches = dataset[0][0].get_value(borrow=True).shape[0] // batch_size
 
 
 
