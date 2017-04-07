@@ -351,11 +351,12 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
         test_loss = np.mean(test_model())
 
         test_epoch_error += [test_loss]
+        print('The classification error for epoch %d is %f. ' % (epoch, test_epoch_error[-1]))
 
     path = '../deep/rbm_' + str(hidden_list[0]) + '_' + str(hidden_list[1]) + '/lr_' + str(lr) + \
                '/decay_' + str(decay) + '/sparsity_' + str(sparsity) +  '/beta_' + str(beta)
-    show_loss(savename=path+'train_error.png',epoch_error=mean_epoch_error)
-    show_loss(savename=path + 'test_error.png', epoch_error = test_epoch_error)
+    show_loss(savename=path+'/train_error.png',epoch_error=mean_epoch_error)
+    show_loss(savename=path + '/test_error.png', epoch_error = test_epoch_error)
 
 
 
@@ -368,7 +369,7 @@ if __name__ == '__main__':
     # decay_list = [0.0001, 0.001, 0.00001]
     # sparsity_list = [0.1, 0.2, 0.05]
     # beta_list = [0, 0.01, 0.1]
-    # sparsity_decay_list = [0.9, 0.99]
+    # sparsity_decay_list = [0.9]
     # hidden_list_list = [[196, 100], [196, 64]]
     # epoches = 300
     #
