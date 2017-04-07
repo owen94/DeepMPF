@@ -332,7 +332,7 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
 
     dataset = load_data('mnist.pkl.gz')
     train_fn, valid_model, test_model = deep_belief_network.fine_tuning(datasets= dataset,
-                                                                        batch_size= batch_size, learning_rate=lr)
+                                                                        batch_size= batch_size, learning_rate=lr*10)
     n_train_batches = dataset[0][0].get_value(borrow=True).shape[0] // batch_size
 
 
