@@ -118,30 +118,32 @@ class dmpf_optimizer(object):
 
         ###############   Add  sparsity Here ###########################
 
-        raw = self.input[:,:self.visible_units]
-        activation = self.propup(raw)[1]
-        rho = T.mean(activation,axis=0)  # rho is the current
-        self.rho = rho * (1 - sparse_decay) + sparse_decay * self.rho
+        if beta != 0:
 
-        cost_kl = beta*T.sum(sparsity* T.log(sparsity/self.rho)+(1 - sparsity)*T.log((1 - sparsity)/(1 - self.rho)))
+            raw = self.input[:,:self.visible_units]
+            activation = self.propup(raw)[1]
+            rho = T.mean(activation,axis=0)  # rho is the current
+            self.rho = rho * (1 - sparse_decay) + sparse_decay * self.rho
 
-        KL = beta*((-sparsity/self.rho) + ((1 - sparsity)/(1 - self.rho)))
-        kl_b_grad = KL*activation*(1-activation)
+            cost_kl = beta*T.sum(sparsity* T.log(sparsity/self.rho)+(1 - sparsity)*T.log((1 - sparsity)/(1 - self.rho)))
 
-        KL_grad = T.dot(raw.T, kl_b_grad)
+            KL = beta*((-sparsity/self.rho) + ((1 - sparsity)/(1 - self.rho)))
+            kl_b_grad = KL*activation*(1-activation)
 
-        a = theano.shared(value = np.asarray(np.zeros((self.visible_units,self.visible_units)),dtype=theano.config.floatX)
-                          , borrow = True)
-        b = theano.shared(value = np.asarray(np.zeros((self.hidden_units,self.hidden_units)),dtype=theano.config.floatX)
-                          , borrow = True)
-        kl_grad1 = T.concatenate((a, KL_grad),axis=1)
-        kl_grad2 = T.concatenate((KL_grad.T, b),axis=1)
-        kl_w_grad = T.concatenate((kl_grad1,kl_grad2),axis=0)
-        ##########################################################
+            KL_grad = T.dot(raw.T, kl_b_grad)
 
-        cost += cost_kl
-        W_grad += (kl_w_grad/self.batch_sz)
-        b_grad = T.inc_subtensor(b_grad[self.visible_units:], T.mean(kl_b_grad,axis=0))
+            a = theano.shared(value = np.asarray(np.zeros((self.visible_units,self.visible_units)),dtype=theano.config.floatX)
+                              , borrow = True)
+            b = theano.shared(value = np.asarray(np.zeros((self.hidden_units,self.hidden_units)),dtype=theano.config.floatX)
+                              , borrow = True)
+            kl_grad1 = T.concatenate((a, KL_grad),axis=1)
+            kl_grad2 = T.concatenate((KL_grad.T, b),axis=1)
+            kl_w_grad = T.concatenate((kl_grad1,kl_grad2),axis=0)
+            ##########################################################
+
+            cost += cost_kl
+            W_grad += (kl_w_grad/self.batch_sz)
+            b_grad = T.inc_subtensor(b_grad[self.visible_units:], T.mean(kl_b_grad,axis=0))
 
         W_grad *= self.zero_grad
         grads = [W_grad,b_grad]

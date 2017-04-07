@@ -68,7 +68,8 @@ class dbn(object):
             index = T.lscalar('index')
 
             if dataset is None:
-                data = load_mnist()
+                #data = load_mnist()
+                data = load_IMAGE()
             else:
                 data = np.load(dataset) ##  A rbm should return the activations in the hidden layer as the
                 # input to the next rbm. Here we use .npy to save it.
@@ -324,7 +325,7 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
     hidden_list = hidden_list
 
 
-    deep_belief_network = dbn(n_ins= 784, hidden_layers_sizes=hidden_list,n_outs=10,batch_sz=40)
+    deep_belief_network = dbn(n_ins=64, hidden_layers_sizes=hidden_list,n_outs=10,batch_sz=40)
 
     deep_belief_network.pretrain(lr=lr,decay=decay,sparsity=sparsity,beta=beta,sparsity_decay=sparsity_decay, epoches=epoches)
 
@@ -332,7 +333,7 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
 
     dataset = load_data('mnist.pkl.gz')
     train_fn, valid_model, test_model = deep_belief_network.fine_tuning(datasets= dataset,
-                                                                        batch_size= batch_size, learning_rate=lr*10)
+                                                                        batch_size= batch_size, learning_rate=0.05)
     n_train_batches = dataset[0][0].get_value(borrow=True).shape[0] // batch_size
 
 
@@ -358,12 +359,14 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
     show_loss(savename=path+'/train_error.png',epoch_error=mean_epoch_error)
     show_loss(savename=path + '/test_error.png', epoch_error = test_epoch_error)
 
+    save(filename= path + '/rbm.pkl', bob=deep_belief_network)
+
 
 
 if __name__ == '__main__':
 
     train_deep_rbm(lr=0.001,decay=0.0001,hidden_list=[196],
-                                      beta=0,sparsity=0.1,sparsity_decay=0.9, epoches=300)
+                                      beta=0,sparsity=0.1,sparsity_decay=0, epoches=300)
 
     # lr_list = [0.001, 0.0001]
     # decay_list = [0.0001, 0.001, 0.00001]

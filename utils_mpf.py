@@ -22,6 +22,43 @@ def save(filename, bob):
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
+def normalizeData(patches):
+    # Squash data to [0.1, 0.9] since we use sigmoid as the activation
+    # function in the output layer
+
+    # Remove DC (mean of images).
+    patches = patches-np.array([np.mean(patches,axis=1)]).T
+
+    # Truncate to +/-3 standard deviations and scale to -1 to 1
+    pstd = 3*np.std(patches)
+    patches = np.fmax(np.fmin(patches,pstd),-pstd)/pstd
+
+    # Rescale from [-1,1] to [0.1,0.9]
+    patches = (patches+1)*0.4+0.1
+    return patches
+
+def load_IMAGE():
+
+    Images = np.load('IMAGES.npy')
+    num_patches = 10000
+    patch_size = 8
+    patches = np.zeros((num_patches,patch_size*patch_size))
+
+    for i in range(num_patches):
+        pix_index = np.random.randint(500,size=2)
+        im_index = np.random.randint(10)
+        patches[i,:] = patches[i,:] + \
+                       Images[pix_index[0]:pix_index[0]+patch_size,pix_index[1]:pix_index[1]+patch_size,
+                       im_index].reshape(1,patch_size*patch_size)
+
+
+    patches = normalizeData(patches)
+    #display(patches[:100,:])
+
+    binarizer = preprocessing.Binarizer(threshold=0.5)
+    patches =  binarizer.transform(patches)
+
+    return patches
 
 
 def load_mnist():
