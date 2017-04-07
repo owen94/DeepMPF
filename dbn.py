@@ -49,7 +49,7 @@ class dbn(object):
 
         epoches = 500
         in_epoch = 1
-        path = '../deep/rbm_' + str(rbm.hidden_units) + '/lr_' + str(lr) + \
+        path = '../deep/rbm_' + str(rbm.visible_units) + '_' + str(rbm.hidden_units) + '/lr_' + str(lr) + \
                '/decay_' + str(decay) + '/sparsity_' + str(sparsity) +  '/beta_' + str(beta)
 
         if not os.path.exists(path):
@@ -118,7 +118,7 @@ class dbn(object):
             if int(em_epoch+1) % 50 ==0:
 
                 saveName = path + '/weights_' + str(em_epoch) + '.png'
-                tile_shape = (10, rbm.hidden_units//10 )
+                tile_shape = (int(np.sqrt(rbm.hidden_units)), int(np.sqrt(rbm.hidden_units)))
                 image_shape = (int(np.sqrt(visible_units)), int(np.sqrt(visible_units)))
 
                 #displayNetwork(W1.T,saveName=saveName)
@@ -172,7 +172,7 @@ class dbn(object):
 
 
 
-    def classifier(self):
+    def build_classifier(self):
 
         ######  This function implement a classifier to fintune the whole model ###########
 
@@ -181,7 +181,7 @@ class dbn(object):
 
         self.sigmoid_layers = []
         numpy_rng = numpy.random.RandomState(1234)
-        self.x = T.matrix('x')  # the data is presented as rasterized images
+        self.z = T.matrix('z')  # the data is presented as rasterized images
         self.y = T.ivector('y')  # the labels are presented as 1D vector
                                  # of [int] label
         self.params = []
@@ -200,7 +200,7 @@ class dbn(object):
             # hidden layer below or the input of the DBN if you are on
             # the first layer
             if i == 0:
-                layer_input = self.x
+                layer_input = self.z
             else:
                 layer_input = self.sigmoid_layers[-1].output
 
@@ -261,7 +261,7 @@ class dbn(object):
             outputs=self.finetune_cost,
             updates=updates,
             givens={
-                self.x: train_set_x[
+                self.z: train_set_x[
                     index * batch_size: (index + 1) * batch_size
                 ],
                 self.y: train_set_y[
@@ -274,7 +274,7 @@ class dbn(object):
             [index],
             self.errors,
             givens={
-                self.x: test_set_x[
+                self.z: test_set_x[
                     index * batch_size: (index + 1) * batch_size
                 ],
                 self.y: test_set_y[
@@ -287,7 +287,7 @@ class dbn(object):
             [index],
             self.errors,
             givens={
-                self.x: valid_set_x[
+                self.z: valid_set_x[
                     index * batch_size: (index + 1) * batch_size
                 ],
                 self.y: valid_set_y[
@@ -310,12 +310,13 @@ class dbn(object):
 
 def train_depp_rbm():
 
-
+    epoches = 500
     lr = 0.001
     decay = 0.0001
     sparsity = 0.1
     beta= 0.01
     sparsity_decay = 0.9
+    batch_size = 40
 
 
     hidden_list = [196, 100]
@@ -325,8 +326,34 @@ def train_depp_rbm():
 
     deep_belief_network.pretrain(lr=lr,decay=decay,sparsity=sparsity,beta=beta,sparsity_decay=sparsity_decay)
 
+    deep_belief_network.build_classifier()
+
+    dataset = load_data('mnist.pkl.gz')
+    train_fn, valid_model, test_model = deep_belief_network.fine_tuning(datasets= dataset,
+                                                                        batch_size= batch_size, learning_rate=lr)
+    n_train_batches = dataset[0][0] // batch_size
 
 
+
+    mean_epoch_error = []
+    test_epoch_error = []
+
+    for epoch in range(epoches):
+        mean_batch_error = []
+        for batch_index in range(n_train_batches):
+            minibatch_avg_cost = train_fn(batch_index)
+            mean_batch_error += [minibatch_avg_cost]
+
+        mean_epoch_error  += [np.mean(mean_batch_error)]
+
+        test_loss = np.mean(test_model())
+
+        test_epoch_error += [test_loss]
+
+    path = '../deep/rbm_' + str(hidden_list[0]) + '_' + str(hidden_list[1]) + '/lr_' + str(lr) + \
+               '/decay_' + str(decay) + '/sparsity_' + str(sparsity) +  '/beta_' + str(beta)
+    show_loss(savename=path+'train_error.png',epoch_error=mean_epoch_error)
+    show_loss(savename=path + 'test_error.pny', epoch_error = test_epoch_error)
 
 
 
