@@ -355,7 +355,7 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
     path = '../deep/rbm_' + str(hidden_list[0]) + '_' + str(hidden_list[1]) + '/lr_' + str(lr) + \
                '/decay_' + str(decay) + '/sparsity_' + str(sparsity) +  '/beta_' + str(beta)
     show_loss(savename=path+'train_error.png',epoch_error=mean_epoch_error)
-    show_loss(savename=path + 'test_error.pny', epoch_error = test_epoch_error)
+    show_loss(savename=path + 'test_error.png', epoch_error = test_epoch_error)
 
 
 
