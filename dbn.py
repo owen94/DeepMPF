@@ -106,8 +106,10 @@ class dbn(object):
 
             for em_epoch in range(epoches):
 
-
-                binary_data = np.random.binomial(n=1, p = data)
+                if dataset is None:
+                    binary_data = data
+                else:
+                    binary_data = np.random.binomial(n=1, p = data)
 
                 W = rbm.W.get_value(borrow = True)
                 b = rbm.b.get_value(borrow = True)
@@ -322,7 +324,7 @@ def train_depp_rbm():
     lr = 0.001
     decay = 0.0001
     sparsity = 0.1
-    beta= 0.01
+    beta= 0
     sparsity_decay = 0.9
     batch_size = 40
 
