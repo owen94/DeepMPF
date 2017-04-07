@@ -5,6 +5,7 @@ import PIL, gzip
 import matplotlib.colors as colors
 import theano
 import theano.tensor as T
+plt.switch_backend('agg')
 from sklearn import  preprocessing
 
 def load(filename):

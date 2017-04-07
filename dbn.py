@@ -7,6 +7,7 @@ from dmpf_optimizer import dmpf_optimizer
 import timeit
 from PIL import Image
 from logistic_sgd import *
+plt.switch_backend('agg')
 
 class dbn(object):
 
