@@ -362,7 +362,7 @@ def train_deep_rbm(lr, decay, sparsity, beta, sparsity_decay, hidden_list, epoch
 
 if __name__ == '__main__':
 
-    train_deep_rbm(lr=0.001,decay=0.0001,hidden_list=[196,100],
+    train_deep_rbm(lr=0.001,decay=0.0001,hidden_list=[196],
                                       beta=0,sparsity=0.1,sparsity_decay=0.9, epoches=300)
 
     # lr_list = [0.001, 0.0001]
