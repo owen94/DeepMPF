@@ -33,9 +33,18 @@ class get_samples(object):
         for i in range(self.num_rbm):
             act = self.propup(i, data = forward_act[i])
             act_sample = np.random.binomial(size=act[1].shape,
-                                             n=1, p=act)
+                                             n=1, p=act[1])
             forward_act.append(act_sample)
-        return forward_act
+
+        forward_data = []
+
+        # concatenate the states, generate the fully-visible states for training of DBM
+        for i in range(self.num_rbm):
+            data = np.concatenate((forward_act[i], forward_act[i+1]), axis = 1)
+            forward_data.append(data)
+
+
+        return forward_act, forward_data
 
     def undirected_pass(self,forward_act):
 
@@ -64,7 +73,7 @@ class get_samples(object):
 
         # concatenate the states, generate the fully-visible states for training of DBM
         for i in range(self.num_rbm):
-            data = np.concatenate((undirected_act[i], undirected_act[i+1]), axis = 0)
+            data = np.concatenate((undirected_act[i], undirected_act[i+1]), axis = 1)
             undirected_data.append(data)
         return undirected_data
 
@@ -108,7 +117,7 @@ class DBM(object):
 
 
 
-    def get_cost_update(self,decay = 0.00001, learning_rate = 0.001):
+    def get_cost_update(self,decay = 0.0001, learning_rate = 0.001):
         '''
         :param undirected_act: The input from the forward and backward pass
         :return: the cost function and the updates
@@ -131,7 +140,7 @@ class DBM(object):
             h = z * T.exp(energy_difference)
             W_grad = (T.dot(h.T,self.input[i])+T.dot(self.input[i].T,h))*self.epsilon/self.batch_sz
             b_grad = T.mean(h,axis=0)*self.epsilon
-            decay_grad = decay*self.W
+            decay_grad = decay*W
             W_grad += decay_grad
 
             visible_units = self.hidden_list[i]
@@ -147,7 +156,7 @@ class DBM(object):
             W_grad *= zero_grad
             grads = [W_grad,b_grad]
 
-            params = [W,b]
+            params = [self.W[i],self.b[i]]
 
             update_rbm = Adam(grads=grads, params=params,lr=learning_rate)
             updates += update_rbm
@@ -198,8 +207,7 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
                                      x2: new_data[1][index * batch_sz: (index + 1) * batch_sz],
                                      x3: new_data[2][index * batch_sz: (index + 1) * batch_sz]
                                  })
-    saveName_w = None
-    saveName_b = None
+
     mean_epoch_error = []
     start_time = timeit.default_timer()
 
@@ -214,11 +222,10 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
             b.append(dbm.b[i].get_value(borrow = True))
 
         samplor = get_samples(hidden_list= hidden_list, W=W, b = b)
-        forward_data = samplor.forward_pass(input_data= data)
-        undirected_data = samplor.undirected_pass(forward_act= forward_data)
-
+        forward_act, forward_data = samplor.forward_pass(input_data= data)
+        #undirected_data = samplor.undirected_pass(forward_act = forward_act)
         for j in range(num_rbm):
-            new_data[j].set_value(np.asarray(undirected_data[j], dtype=theano.config.floatX))
+            new_data[j].set_value(np.asarray(forward_data[j], dtype=theano.config.floatX))
 
         ## Train the dbm
         mean_cost = []
@@ -251,6 +258,51 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
         if int(n_epoch+1) % 100 ==0:
             filename = path + '/dbm_' + str(n_epoch) + '.pkl'
             save(filename,dbm)
+            W = []
+            b = []
+            for i in range(num_rbm):
+                W.append(dbm.W[i].get_value(borrow = True))
+                b.append(dbm.b[i].get_value(borrow = True))
+
+            n_chains = 20
+            n_samples = 10
+            plot_every = 3
+            image_data = np.zeros(
+                (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
+            )
+
+            for idx in range(n_samples):
+                persistent_vis_chain = np.random.randint(2,size=(n_chains, hidden_list[-1]))
+
+                v_samples = persistent_vis_chain
+
+                for i in range(num_rbm):
+
+                    vis_units = hidden_list[num_rbm-i - 1]
+                    W_sample = W[num_rbm - i -1 ][:vis_units,vis_units:]
+                    b_down = b[num_rbm - i -1 ][:vis_units]
+                    b_up = b[num_rbm - i -1 ][vis_units:]
+
+                    for j in range(plot_every):
+                        downact1 = sigmoid(np.dot(v_samples,W_sample.T) + b_down )
+                        down_sample1 = np.random.binomial(n=1, p= downact1)
+                        upact1 = sigmoid(np.dot(down_sample1,W_sample)+b_up)
+                        v_samples = np.random.binomial(n=1,p=upact1)
+                    v_samples = down_sample1
+                print(' ... plotting sample ', idx)
+
+                image_data[29 * idx:29 * idx + 28, :] = tile_raster_images(
+                    X= downact1,
+                    img_shape=(28, 28),
+                    tile_shape=(1, n_chains),
+                    tile_spacing=(1, 1)
+                )
+
+            image = Image.fromarray(image_data)
+            image.save(path + '/samples_.' + str(n_epoch) + '.png')
+
+
+
 
     loss_savename = path + '/train_loss.eps'
     show_loss(savename= loss_savename, epoch_error= mean_epoch_error)
@@ -262,20 +314,26 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
     print ('Training took %f minutes' % (running_time / 60.))
 
 
+    ###  generate samples ##########################
+
+
+
+
 if __name__ == '__main__':
 
 
     learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [984, 400, 400, 196]
+    hidden_units_list = [[784, 196, 196, 64], [784, 400, 196, 64], [784, 1000, 400, 64],[784, 1000, 400, 196]
+                         ,[784, 400, 196, 25]]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [.1]
     batch_list = [40]
-    decay_list = [0.0001,0, 0.001]
+    decay_list = [0.0001]
 
-    for batch_size in batch_list:
+    for hidden_list in hidden_units_list:
         for decay in decay_list:
             for learning_rate in learning_rate_list:
-                    train_dbm(hidden_list=hidden_units_list,decay=decay,lr=learning_rate)
+                    train_dbm(hidden_list=hidden_list,decay=decay,lr=learning_rate)
