@@ -9,14 +9,14 @@ from theano_optimizers import Adam
 
 class DBM(object):
 
-    def __init__(self, hidden_list = [] , batch_sz = 40):
+    def __init__(self, hidden_list = [] , batch_sz = 40, input = None):
 
         self.num_rbm = int(len(hidden_list) - 1 )
         self.hidden_list = hidden_list
 
         self.W = []
         self.b = []
-        self.x = []
+        #self.x = []
 
         for i in range(self.num_rbm):
             initial_W = np.asarray(get_mpf_params(self.hidden_list[i],self.hidden_list[i+1]),
@@ -30,7 +30,7 @@ class DBM(object):
                 name='bias',borrow=True)
             self.b.append(b)
 
-            self.x  +=  [T.matrix('x_' + str(i))]
+            #self.x  +=  [T.matrix('x_' + str(i))]
 
         numpy_rng = np.random.RandomState(1233456)
 
@@ -38,6 +38,11 @@ class DBM(object):
         self.epsilon = 0.01
 
         self.batch_sz = batch_sz
+
+        if not input:
+            self.input = T.matrix('input')
+        else:
+            self.input = input
 
     def propup(self, i, data):
         vis_units = self.hidden_list[i]
