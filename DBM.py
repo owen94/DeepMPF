@@ -5,18 +5,78 @@ DBM differenciate from DBN since it is undirected graphical model.
 from utils_mpf import *
 from theano.tensor.shared_randomstreams import RandomStreams
 from theano_optimizers import Adam
+import os
+import timeit
+from PIL import Image
 
+class get_samples(object):
+
+    def __init__(self, hidden_list = [], W = None, b = None):
+        self.hidden_list = hidden_list
+        self.num_rbm = len(hidden_list) - 1
+        self.W = W
+        self.b = b
+
+    def propup(self, i, data):
+        vis_units = self.hidden_list[i]
+        pre_sigmoid_activation = np.dot(data, self.W[i][:vis_units,vis_units:]) \
+                             + self.b[i][vis_units:]
+        return [pre_sigmoid_activation, sigmoid(pre_sigmoid_activation)]
+
+    def forward_pass(self, input_data):
+        '''
+        input: the input dataset
+        :return: a binary dataset with hidden states can be used for vpf
+        '''
+        forward_act = []
+        forward_act.append(input_data)
+        for i in range(self.num_rbm):
+            act = self.propup(i, data = forward_act[i])
+            act_sample = np.random.binomial(size=act[1].shape,
+                                             n=1, p=act)
+            forward_act.append(act_sample)
+        return forward_act
+
+    def undirected_pass(self,forward_act):
+
+        # Taking into account both the botton and up layer of the intermediate layers
+        num_intermediate = self.num_rbm - 1
+        undirected_act = []
+        undirected_act.append(forward_act[0])
+        for i in range(num_intermediate):
+            bottom_W = self.W[i]
+            bottom_b = self.b[i]
+            up_W = self.W[i+1]
+            up_b = self.b[i+1]
+            bottom_vis = self.hidden_list[i]
+            up_vis = self.hidden_list[i+1]
+
+            pre_inter_act = np.dot(forward_act[i],bottom_W[:bottom_vis,bottom_vis:] + bottom_b[bottom_vis:]) + \
+                            np.dot(forward_act[i+2],up_W[:up_vis,up_vis:].T + up_b[:up_vis])
+            inter_act = sigmoid(pre_inter_act)
+            inter_act_sample = np.random.binomial(size=inter_act.shape,
+                                             n=1, p=inter_act)
+            undirected_act.append(inter_act_sample)
+
+        undirected_act.append(forward_act[-1])
+
+        undirected_data = []
+
+        # concatenate the states, generate the fully-visible states for training of DBM
+        for i in range(self.num_rbm):
+            data = np.concatenate((undirected_act[i], undirected_act[i+1]), axis = 0)
+            undirected_data.append(data)
+        return undirected_data
 
 class DBM(object):
 
-    def __init__(self, hidden_list = [] , batch_sz = 40, input = None):
+    def __init__(self, hidden_list = [] , batch_sz = 40, input1 = None, input2 = None, input3 = None):
 
         self.num_rbm = int(len(hidden_list) - 1 )
         self.hidden_list = hidden_list
 
         self.W = []
         self.b = []
-        #self.x = []
 
         for i in range(self.num_rbm):
             initial_W = np.asarray(get_mpf_params(self.hidden_list[i],self.hidden_list[i+1]),
@@ -30,8 +90,6 @@ class DBM(object):
                 name='bias',borrow=True)
             self.b.append(b)
 
-            #self.x  +=  [T.matrix('x_' + str(i))]
-
         numpy_rng = np.random.RandomState(1233456)
 
         self.theano_rng = RandomStreams(numpy_rng.randint(2 ** 30))
@@ -39,64 +97,18 @@ class DBM(object):
 
         self.batch_sz = batch_sz
 
-        if not input:
-            self.input = T.matrix('input')
-        else:
-            self.input = input
+        self.input1 = input1
+        self.input2 = input2
+        self.input3 = input3
 
-    def propup(self, i, data):
-        vis_units = self.hidden_list[i]
-        pre_sigmoid_activation = T.dot(data, self.W[i][:vis_units,vis_units:]) \
-                                 + self.b[i][vis_units:]
-        return [pre_sigmoid_activation, T.nnet.sigmoid(pre_sigmoid_activation)]
-
-    def forward_pass(self, input_data):
-        '''
-        input: the input dataset
-        :return: a binary dataset with hidden states can be used for vpf
-        '''
-        forward_act = []
-        forward_act.append(input_data)
-        for i in range(self.num_rbm):
-            act = self.propup(i, data = forward_act[i])
-            act_sample = self.theano_rng.binomial(size=act[1].shape,
-                                             n=1, p=act,
-                                             dtype=theano.config.floatX)
-            forward_act.append(act_sample)
-        return forward_act
-
-    def undirected_pass(self,forward_act):
-
-        num_intermediate = self.num_rbm - 1
-        undirected_act = []
-        undirected_act.append(forward_act[0])
-        for i in range(num_intermediate):
-            bottom_W = self.W[i]
-            bottom_b = self.b[i]
-            up_W = self.W[i+1]
-            up_b = self.b[i+1]
-            bottom_vis = self.hidden_list[i]
-            up_vis = self.hidden_list[i+2]
-
-            pre_inter_act = T.dot(forward_act[i],bottom_W[:bottom_vis,bottom_vis:] + bottom_b[bottom_vis:]) + \
-                            T.dot(forward_act[i+2],up_W[:bottom_vis,bottom_vis:].T + up_b[:up_vis])
-            inter_act = T.nnet.sigmoid(pre_inter_act)
-            inter_act_sample = self.theano_rng.binomial(size=inter_act.shape,
-                                             n=1, p=inter_act,
-                                             dtype=theano.config.floatX)
-            undirected_act.append(inter_act_sample)
-
-        undirected_act.append(forward_act[-1])
+        if len(hidden_list) == 4:
+            self.input = [self.input1, self.input2, self.input3]
+        elif len(hidden_list) == 3:
+            self.input = [self.input1, self.input2]
 
 
-        undirected_data = []
-        for i in range(self.num_rbm):
-            data = T.concatenate((undirected_act[i], undirected_act[i+1]), axis = 0)
-            undirected_data.append(data)
-        return undirected_data
 
-
-    def get_cost_update(self,undirected_act,decay = 0.00001, learning_rate = 0.001):
+    def get_cost_update(self,decay = 0.00001, learning_rate = 0.001):
         '''
         :param undirected_act: The input from the forward and backward pass
         :return: the cost function and the updates
@@ -106,19 +118,18 @@ class DBM(object):
         decay = decay
         for i in range(self.num_rbm):
 
-            input = T.concatenate((undirected_act[i],undirected_act[i+1]), axis = 0)
             W = self.W[i]
             b = self.b[i]
 
-            z = 1/2 - input
-            energy_difference = z * (T.dot(input, W)+ b.reshape([1,-1]))
+            z = 1/2 - self.input[i]
+            energy_difference = z * (T.dot(self.input[i], W)+ b.reshape([1,-1]))
 
             cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
             cost_weight = 0.5 * decay * T.sum(W**2)
             cost += cost_weight
 
             h = z * T.exp(energy_difference)
-            W_grad = (T.dot(h.T,input)+T.dot(input.T,h))*self.epsilon/self.batch_sz
+            W_grad = (T.dot(h.T,self.input[i])+T.dot(self.input[i].T,h))*self.epsilon/self.batch_sz
             b_grad = T.mean(h,axis=0)*self.epsilon
             decay_grad = decay*self.W
             W_grad += decay_grad
@@ -144,20 +155,127 @@ class DBM(object):
         return cost, updates
 
 
-
-
-
-
-def train_dbm(hidden_list, decay, lr):
+def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
 
     data = load_mnist()
 
+    path = '../Thea_mpf/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
+           + '_' + str(hidden_list[3])
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    num_rbm = len(hidden_list) -1
     '''
     step 1: forward pass
     step 2: undirected pass to generate samples
     step 3: given undirected data, do sgd
     step 4: go to step 1 again after
     '''
+    index = T.lscalar()    # index to a mini batch
+    x1 = T.matrix('x1')
+    x2 = T.matrix('x2')
+    x3 = T.matrix('x3')
+    dbm = DBM(hidden_list = hidden_list,
+              input1=x1,
+              input2=x2,
+              input3=x3,
+              batch_sz=batch_sz)
+
+    n_train_batches = data.shape[0]//batch_sz
+
+    new_data = []
+
+    for i in range(num_rbm):
+        num_units = hidden_list[i] + hidden_list[i+1]
+        new_data.append(theano.shared(value=np.asarray(np.zeros((data.shape[0],num_units)), dtype=theano.config.floatX),
+                                  name = 'train',borrow = True) )
+
+    cost, updates = dbm.get_cost_update(decay=decay,learning_rate=lr)
+
+    train_func = theano.function([index], cost, updates= updates,
+                                 givens= {
+                                     x1: new_data[0][index * batch_sz: (index + 1) * batch_sz],
+                                     x2: new_data[1][index * batch_sz: (index + 1) * batch_sz],
+                                     x3: new_data[2][index * batch_sz: (index + 1) * batch_sz]
+                                 })
+    saveName_w = None
+    saveName_b = None
+    mean_epoch_error = []
+    start_time = timeit.default_timer()
+
+    for n_epoch in range(epoch):
+
+        ## propup to get the trainning data
+
+        W = []
+        b = []
+        for i in range(num_rbm):
+            W.append(dbm.W[i].get_value(borrow = True))
+            b.append(dbm.b[i].get_value(borrow = True))
+
+        samplor = get_samples(hidden_list= hidden_list, W=W, b = b)
+        forward_data = samplor.forward_pass(input_data= data)
+        undirected_data = samplor.undirected_pass(forward_act= forward_data)
+
+        for j in range(num_rbm):
+            new_data[j].set_value(np.asarray(undirected_data[j], dtype=theano.config.floatX))
+
+        ## Train the dbm
+        mean_cost = []
+        for batch_index in range(n_train_batches):
+            mean_cost += [train_func(batch_index)]
+        mean_epoch_error += [np.mean(mean_cost)]
+        print('The cost for mpf in epoch %d is %f'% (n_epoch,mean_epoch_error[-1]))
 
 
-    dbm = dbm(hidden_list = hidden_list,)
+        if int(n_epoch+1) % 20 ==0:
+
+            saveName = path + '/weights_' + str(n_epoch) + '.png'
+            tile_shape = (10, hidden_list[1]//10)
+
+            #displayNetwork(W1.T,saveName=saveName)
+
+            W = dbm.W[0].get_value(borrow = True)
+            visible_units = hidden_list[0]
+
+            image = Image.fromarray(
+                tile_raster_images(  X=(W[:visible_units,visible_units:]).T,
+                        img_shape=(28, 28),
+                        tile_shape=tile_shape,
+                        tile_spacing=(1, 1)
+                    )
+                    )
+            image.save(saveName)
+
+
+        if int(n_epoch+1) % 100 ==0:
+            filename = path + '/dbm_' + str(n_epoch) + '.pkl'
+            save(filename,dbm)
+
+    loss_savename = path + '/train_loss.eps'
+    show_loss(savename= loss_savename, epoch_error= mean_epoch_error)
+
+    end_time = timeit.default_timer()
+
+    running_time = (end_time - start_time)
+
+    print ('Training took %f minutes' % (running_time / 60.))
+
+
+if __name__ == '__main__':
+
+
+    learning_rate_list = [0.001]
+    # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
+    # Important ones: num_samples, learning_rate,
+    hidden_units_list = [984, 400, 400, 196]
+    n_samples_list = [1]
+    beta_list = [0]
+    sparsity_list = [.1]
+    batch_list = [40]
+    decay_list = [0.0001,0, 0.001]
+
+    for batch_size in batch_list:
+        for decay in decay_list:
+            for learning_rate in learning_rate_list:
+                    train_dbm(hidden_list=hidden_units_list,decay=decay,lr=learning_rate)

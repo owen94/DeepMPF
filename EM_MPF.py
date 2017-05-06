@@ -79,12 +79,12 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 100,  decay =0.001,  bat
         new_data  = theano.shared(value=np.asarray(np.zeros((data.shape[0],num_units)), dtype=theano.config.floatX),
                                   name = 'train',borrow = True)
     else:
-        new_data = theano.shared(value=np.asarray(data,dtype=theano.config.floaxX),name= 'mnist',borrow = True)
+        new_data = theano.shared(value=np.asarray(data,dtype=theano.config.floatX),name= 'mnist',borrow = True)
 
 
 
     cost,updates = mpf_optimizer.get_dmpf_cost(
-        learning_rate= learning_rate)
+        learning_rate= learning_rate, decay=decay)
 
     train_mpf = theano.function(
         [index],

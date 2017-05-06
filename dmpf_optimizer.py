@@ -87,7 +87,7 @@ class dmpf_optimizer(object):
         self.rho = 0
         #self.params = []
 
-    def get_dmpf_cost(self, learning_rate = 0.001, decay=0.0001, beta=0.01, sparsity = 0.2, sparse_decay = 0.9):
+    def get_dmpf_cost(self, learning_rate = 0.001, decay=0.0001, beta=0, sparsity = 0.2, sparse_decay = 0.9):
 
         # In one round, we feed forward the and get the samples,
         # Compute the probability of each data samples,
