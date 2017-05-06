@@ -67,7 +67,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 500,  decay =0.001,  bat
 
     mpf_optimizer = dmpf_optimizer(
         epsilon=epsilon,
-        explicit_EM= True,
+        explicit_EM= False,
         W = W,
         b = b,
         input = x,
@@ -77,6 +77,10 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 500,  decay =0.001,  bat
     new_data  = theano.shared(value=np.asarray(np.zeros((data.shape[0],num_units)), dtype=theano.config.floatX),
                                   name = 'train',borrow = True)
 
+    mnist_data = theano.shared(value=np.asarray(data,dtype=theano.config.floaxX),name= 'mnist',borrow = True)
+
+
+
     cost,updates = mpf_optimizer.get_dmpf_cost(
         learning_rate= learning_rate)
 
@@ -85,7 +89,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 500,  decay =0.001,  bat
         cost,
         updates=updates,
         givens={
-        x: new_data[index * batch_sz: (index + 1) * batch_sz],
+        x: mnist_data[index * batch_sz: (index + 1) * batch_sz],
         },
         #on_unused_input='warn',
     )
@@ -98,21 +102,21 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 500,  decay =0.001,  bat
 
     for em_epoch in range(out_epoch):
 
-        W = mpf_optimizer.W.get_value(borrow = True)
-        b = mpf_optimizer.b.get_value(borrow = True)
-
-        prop_W = W[:visible_units, visible_units:]
-        prop_b = b[visible_units:]
-        activations, sample_data = get_new_data(data,prop_W,prop_b)
-
-        #sample_prob = get_sample_prob(activations) # This is a vector, each entry stands for the probability of
-        #the respected sample
-        #y = T.vector('y')
-	    #new_data.set_value(np.asarray(sample_data, dtype=theano.config.floatX))
-        # sample_prob = theano.shared(value = np.asarray(sample_prob, dtype= theano.config.floatX),
-        #                             name='prob',borrow = True)
-        #new_data.set_value(value=np.asarray(sample_data, dtype=theano.config.floatX),borrow = True)
-        new_data.set_value(np.asarray(sample_data, dtype=theano.config.floatX))
+        # W = mpf_optimizer.W.get_value(borrow = True)
+        # b = mpf_optimizer.b.get_value(borrow = True)
+        #
+        # prop_W = W[:visible_units, visible_units:]
+        # prop_b = b[visible_units:]
+        # activations, sample_data = get_new_data(data,prop_W,prop_b)
+        #
+        # #sample_prob = get_sample_prob(activations) # This is a vector, each entry stands for the probability of
+        # #the respected sample
+        # #y = T.vector('y')
+        # #new_data.set_value(np.asarray(sample_data, dtype=theano.config.floatX))
+        # # sample_prob = theano.shared(value = np.asarray(sample_prob, dtype= theano.config.floatX),
+        # #                             name='prob',borrow = True)
+        # #new_data.set_value(value=np.asarray(sample_data, dtype=theano.config.floatX),borrow = True)
+        # new_data.set_value(np.asarray(sample_data, dtype=theano.config.floatX))
 
         for mpf_epoch in range(in_epoch):
             mean_cost = []
@@ -241,7 +245,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 500,  decay =0.001,  bat
 if __name__ == '__main__':
 
 
-    learning_rate_list = [0.001, 0.0001]
+    learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
     hidden_units_list = [196]
