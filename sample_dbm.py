@@ -11,22 +11,26 @@ savepath1 = '../Thea_mpf/DBM/DBM_400_196_64'
 path2 = '../Thea_mpf/DBM/DBM_196_196_64/dbm_299.pkl'
 savepath2 = '../Thea_mpf/DBM/DBM_196_196_64'
 
+path3 = '../Thea_mpf/DBM/DBM_1000_400_64/dbm_99.pkl'
+savepath3 = '../Thea_mpf/DBM/DBM_1000_400_64'
 
 
-hidden_list = [784, 196, 196, 64]
+
+hidden_list = [784, 1000, 400, 64]
 dbm1 = load(path1)
 dbm2 = load(path2)
+dbm3 = load(path3)
 num_rbm = 3
 
 W = []
 b = []
 for i in range(num_rbm):
-    W.append(dbm2.W[i].get_value(borrow = True))
-    b.append(dbm2.b[i].get_value(borrow = True))
+    W.append(dbm3.W[i].get_value(borrow = True))
+    b.append(dbm3.b[i].get_value(borrow = True))
 
 n_chains = 20
 n_samples = 10
-plot_every = 10
+plot_every = 4
 image_data = np.zeros(
     (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
 )
@@ -59,4 +63,4 @@ for idx in range(n_samples):
     )
 
 image = Image.fromarray(image_data)
-image.save(savepath2 + '/samples.png')
+image.save(savepath3 + '/samples.png')

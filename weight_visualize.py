@@ -71,3 +71,6 @@ fig.savefig(saveName)
 # fig1.savefig(saveName1)
 #
 # print(np.mean(activations))
+
+
+###### visualize the weight with tile_rater_image ####

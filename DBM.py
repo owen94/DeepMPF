@@ -117,15 +117,16 @@ class DBM(object):
 
 
 
-    def get_cost_update(self,decay = 0.0001, learning_rate = 0.001):
+    def get_cost_update(self,decay_list = [], learning_rate = 0.001):
         '''
         :param undirected_act: The input from the forward and backward pass
         :return: the cost function and the updates
         '''
         updates = []
         cost = 0
-        decay = decay
         for i in range(self.num_rbm):
+
+            decay = decay_list[i]
 
             W = self.W[i]
             b = self.b[i]
@@ -164,36 +165,45 @@ class DBM(object):
         return cost, updates
 
 
-def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
+def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 300):
 
     data = load_mnist()
 
-    if len(hidden_list) == 4:
-
-        path = '../Thea_mpf/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
-               + '_' + str(hidden_list[3])
-    elif len(hidden_list) ==3:
-        path = '../Thea_mpf/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2])
-
-    if not os.path.exists(path):
-        os.makedirs(path)
-
     num_rbm = len(hidden_list) -1
-    '''
-    step 1: forward pass
-    step 2: undirected pass to generate samples
-    step 3: given undirected data, do sgd
-    step 4: go to step 1 again after
-    '''
     index = T.lscalar()    # index to a mini batch
     x1 = T.matrix('x1')
     x2 = T.matrix('x2')
     x3 = T.matrix('x3')
-    dbm = DBM(hidden_list = hidden_list,
+
+    if len(hidden_list) == 4:
+
+        if undirected:
+            path = '../DBM_results/Undirected_DBM/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
+               + '_' + str(hidden_list[3]) + '/decay_' + str(decay[1]) + '/lr_' + str(lr)
+        else:
+            path = '../DBM_results/Directed_DBM/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
+               + '_' + str(hidden_list[3]) + '/decay_' + str(decay[1]) + '/lr_' + str(lr)
+        dbm = DBM(hidden_list = hidden_list,
               input1=x1,
               input2=x2,
-              #input3=x3,
+              input3=x3,
               batch_sz=batch_sz)
+
+    elif len(hidden_list) ==3:
+        if undirected:
+            path = '../DBM_results/Undirected_DBM/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
+               + '/decay_' + str(decay[1]) + '/lr_' + str(lr)
+        else:
+            path = '../DBM_results/Directed_DBM/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
+               + '/decay_' + str(decay[1]) + '/lr_' + str(lr)
+
+        dbm = DBM(hidden_list = hidden_list,
+              input1=x1,
+              input2=x2,
+              batch_sz=batch_sz)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     n_train_batches = data.shape[0]//batch_sz
 
@@ -204,13 +214,20 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
         new_data.append(theano.shared(value=np.asarray(np.zeros((data.shape[0],num_units)), dtype=theano.config.floatX),
                                   name = 'train',borrow = True) )
 
-    cost, updates = dbm.get_cost_update(decay=decay,learning_rate=lr)
+    cost, updates = dbm.get_cost_update(decay_list=decay,learning_rate=lr)
 
-    train_func = theano.function([index], cost, updates= updates,
+    if len(hidden_list) == 4:
+        train_func = theano.function([index], cost, updates= updates,
                                  givens= {
                                      x1: new_data[0][index * batch_sz: (index + 1) * batch_sz],
                                      x2: new_data[1][index * batch_sz: (index + 1) * batch_sz],
-                                     #x3: new_data[2][index * batch_sz: (index + 1) * batch_sz]
+                                     x3: new_data[2][index * batch_sz: (index + 1) * batch_sz]
+                                 })
+    elif len(hidden_list) ==3:
+        train_func = theano.function([index], cost, updates= updates,
+                                 givens= {
+                                     x1: new_data[0][index * batch_sz: (index + 1) * batch_sz],
+                                     x2: new_data[1][index * batch_sz: (index + 1) * batch_sz],
                                  })
 
     mean_epoch_error = []
@@ -228,9 +245,15 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
 
         samplor = get_samples(hidden_list= hidden_list, W=W, b = b)
         forward_act, forward_data = samplor.forward_pass(input_data= data)
-        #undirected_data = samplor.undirected_pass(forward_act = forward_act)
-        for j in range(num_rbm):
-            new_data[j].set_value(np.asarray(forward_data[j], dtype=theano.config.floatX))
+
+        if undirected:
+            undirected_data = samplor.undirected_pass(forward_act = forward_act)
+            for j in range(num_rbm):
+                new_data[j].set_value(np.asarray(undirected_data[j], dtype=theano.config.floatX))
+        if not undirected:
+            for j in range(num_rbm):
+                new_data[j].set_value(np.asarray(forward_data[j], dtype=theano.config.floatX))
+
 
         ## Train the dbm
         mean_cost = []
@@ -327,17 +350,22 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
 if __name__ == '__main__':
 
 
-    learning_rate_list = [0.001]
+    learning_rate_list = [0.001, 0.0001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [[784, 196, 64], [784,196,100],[784,400,100] ]
+    hidden_units_list = [[784, 196, 64], [784,196, 196, 64]]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [.1]
     batch_list = [40]
-    decay_list = [0.0001]
+    decay_list = [ [0.0001, 0, 0, 0], [0.0001, 0.0005, 0.0005, 0.0005],
+                   [0.0001, 0.00001, 0.00001, 0.00001] ]
 
-    for hidden_list in hidden_units_list:
-        for decay in decay_list:
-            for learning_rate in learning_rate_list:
-                    train_dbm(hidden_list=hidden_list,decay=decay,lr=learning_rate)
+    undirected_list = [ False, True]
+    for undirected in undirected_list:
+        for learning_rate in learning_rate_list:
+            for hidden_list in hidden_units_list:
+                for decay in decay_list:
+                    train_dbm(hidden_list=hidden_list,decay=decay,lr=learning_rate, undirected=undirected)
+
+
