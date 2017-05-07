@@ -168,8 +168,13 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
 
     data = load_mnist()
 
-    path = '../Thea_mpf/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
-           + '_' + str(hidden_list[3])
+    if len(hidden_list) == 4:
+
+        path = '../Thea_mpf/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2]) \
+               + '_' + str(hidden_list[3])
+    elif len(hidden_list) ==3:
+        path = '../Thea_mpf/DBM_' + str(hidden_list[1]) + '_' + str(hidden_list[2])
+
     if not os.path.exists(path):
         os.makedirs(path)
 
