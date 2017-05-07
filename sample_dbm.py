@@ -14,19 +14,23 @@ savepath2 = '../Thea_mpf/DBM/DBM_196_196_64'
 path3 = '../Thea_mpf/DBM/DBM_1000_400_64/dbm_99.pkl'
 savepath3 = '../Thea_mpf/DBM/DBM_1000_400_64'
 
+path4 = '../Thea_mpf/DBM/DBM_196_64/dbm_99.pkl'
+savepath4 = '../Thea_mpf/DBM/DBM_196_64'
 
 
-hidden_list = [784, 1000, 400, 64]
+
+hidden_list = [784, 196, 64]
 dbm1 = load(path1)
 dbm2 = load(path2)
 dbm3 = load(path3)
+dbm4 = load(path4)
 num_rbm = 3
 
 W = []
 b = []
 for i in range(num_rbm):
-    W.append(dbm3.W[i].get_value(borrow = True))
-    b.append(dbm3.b[i].get_value(borrow = True))
+    W.append(dbm4.W[i].get_value(borrow = True))
+    b.append(dbm4.b[i].get_value(borrow = True))
 
 n_chains = 20
 n_samples = 10

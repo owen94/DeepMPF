@@ -165,7 +165,7 @@ class DBM(object):
         return cost, updates
 
 
-def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 300):
+def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 600):
 
     data = load_mnist()
 
@@ -286,15 +286,23 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
         if int(n_epoch+1) % 100 ==0:
             filename = path + '/dbm_' + str(n_epoch) + '.pkl'
             save(filename,dbm)
+
+
+
             W = []
             b = []
             for i in range(num_rbm):
                 W.append(dbm.W[i].get_value(borrow = True))
                 b.append(dbm.b[i].get_value(borrow = True))
 
+            w_name = path + '/weight_' + str(n_epoch) + '.npy'
+            b_name = path + '/bias_' + str(n_epoch) + '.npy'
+            np.save(w_name,W)
+            np.save(b_name,b)
+
             n_chains = 20
             n_samples = 10
-            plot_every = 5
+            plot_every = 7
             image_data = np.zeros(
                 (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
             )
@@ -350,18 +358,18 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 if __name__ == '__main__':
 
 
-    learning_rate_list = [0.001, 0.0001]
+    learning_rate_list = [0.0001, 0.0005]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [[784, 196, 64], [784,196, 196, 64]]
+    hidden_units_list = [[784, 196, 64], [784, 400, 196, 64]]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [.1]
     batch_list = [40]
     decay_list = [ [0.0001, 0, 0, 0], [0.0001, 0.0005, 0.0005, 0.0005],
-                   [0.0001, 0.00001, 0.00001, 0.00001] ]
+                   [0.0001, 0.00001, 0.00001, 0.00001],  [0.0001, 0.0001, 0.0001, 0.0001] ]
 
-    undirected_list = [ False, True]
+    undirected_list = [False]
     for undirected in undirected_list:
         for learning_rate in learning_rate_list:
             for hidden_list in hidden_units_list:
