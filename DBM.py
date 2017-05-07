@@ -187,7 +187,7 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
     dbm = DBM(hidden_list = hidden_list,
               input1=x1,
               input2=x2,
-              input3=x3,
+              #input3=x3,
               batch_sz=batch_sz)
 
     n_train_batches = data.shape[0]//batch_sz
@@ -205,7 +205,7 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
                                  givens= {
                                      x1: new_data[0][index * batch_sz: (index + 1) * batch_sz],
                                      x2: new_data[1][index * batch_sz: (index + 1) * batch_sz],
-                                     x3: new_data[2][index * batch_sz: (index + 1) * batch_sz]
+                                     #x3: new_data[2][index * batch_sz: (index + 1) * batch_sz]
                                  })
 
     mean_epoch_error = []
@@ -266,7 +266,7 @@ def train_dbm(hidden_list, decay, lr, batch_sz = 40, epoch = 300):
 
             n_chains = 20
             n_samples = 10
-            plot_every = 3
+            plot_every = 5
             image_data = np.zeros(
                 (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
             )
@@ -325,8 +325,7 @@ if __name__ == '__main__':
     learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [[784, 196, 196, 64], [784, 400, 196, 64], [784, 1000, 400, 64],[784, 1000, 400, 196]
-                         ,[784, 400, 196, 25]]
+    hidden_units_list = [[784, 196, 64], [784,196,100],[784,400,100] ]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [.1]

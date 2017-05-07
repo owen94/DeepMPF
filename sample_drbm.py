@@ -11,7 +11,7 @@ f = gzip.open(dataset, 'rb')
 train_set, valid_set, test_set = pickle.load(f,encoding="bytes")
 f.close()
 
-path = '../mpf_results/lay1_196'
+path = '../mpf_results/196'
 if not os.path.exists(path):
     os.makedirs(path)
 
@@ -50,7 +50,7 @@ def generate_from_rbm(W_file, b_file, W2_file, b2_file):
 
 
     # end-snippet-6 start-snippet-7
-    plot_every = 8
+    plot_every = 20
     image_data = np.zeros(
         (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
     )
@@ -98,6 +98,7 @@ def generate_from_rbm(W_file, b_file, W2_file, b2_file):
 
             # vis_mf = sigmoid(np.dot(down_sample1, W.T) + b_vis)
             # v_samples = np.random.binomial(n=1,p=vis_mf)
+        #down_sample1 = v_samples
 
         for j in range(plot_every):
 
@@ -128,21 +129,21 @@ def generate_from_rbm(W_file, b_file, W2_file, b2_file):
     # construct image
     image = Image.fromarray(image_data)
     # image_binary = Image.fromarray(image_binary_data)
-    image.save(path + '/samples.png')
+    image.save(path + '/rbm2_samples.png')
     # image_binary.save(path + '/binary_samples.eps')
 
 
 
 decay_list = [0.0001]
 lr_list = [0.001]
-weight1 = '../mpf_results/lay1_196/weights_499.npy'
-bias1 = '../mpf_results/lay1_196/bias_499.npy'
+weight1 = '../mpf_results/196/weights_499.npy'
+bias1 = '../mpf_results/196/bias_499.npy'
 perplexity = 20
 
 for decy in decay_list:
     for lr in lr_list:
-        weight2 = '../mpf_results/lay1_196/lay2_100/decay_' + str(decy) + '/lr_' + str(lr) + '/weights_399.npy'
-        bias2 = '../mpf_results/lay1_196/lay2_100/decay_' + str(decy) + '/lr_' + str(lr) + '/bias_399.npy'
+        weight2 = '../mpf_results/196/lay2_100/decay_' + str(decy) + '/lr_' + str(lr) + '/weights_399.npy'
+        bias2 = '../mpf_results/196/lay2_100/decay_' + str(decy) + '/lr_' + str(lr) + '/bias_399.npy'
 
 
 
