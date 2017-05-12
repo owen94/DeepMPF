@@ -253,7 +253,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
     np.save(saveloss, mean_epoch_error)
 
     savesparisty = path  + '/sparsity_params_' + str(hidden_units) + '.npy'
-    np.save(savesparisty, savesparisty)
+    np.save(savesparisty, sparsity_parameter)
 
     savesquaredweight = path  + '/squared_weight_' + str(hidden_units) + '.npy'
     np.save(savesquaredweight, squared_weights)

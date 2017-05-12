@@ -1,30 +1,72 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+#
+# path_1 = '../DBN_results/loss/loss_100.npy'
+# path_2 = '../DBN_results/loss/loss_196.npy'
+# path_3 = '../DBN_results/loss/loss_400.npy'
+#
+# path_4 = '../DBN_results/loss/loss.eps'
+#
+#
+# loss_1 = np.load(path_1)
+# loss_2 = np.load(path_2)
+# loss_3 = np.load(path_3)
+#
+# print(loss_1.shape)
+#
+# x = np.arange(len(loss_1))
+#
+# plt.plot(x, loss_1, 'r--')
+# plt.plot(x, loss_2, 'm-.')
+# plt.plot(x, loss_3, 'b')
+# plt.xlabel('Number of epoches')
+# plt.ylabel('Training Loss')
+# plt.axis([0, 400, 2, 8])
+# plt.legend([ 'VPF(100)', 'VPF(196)', 'VPF(400)'], loc='best')
+# #plt.title('Adam Training Loss')
+# plt.grid(False)
+# #plt.show()
+# plt.savefig(path_4)
 
-path_1 = '../DBN_results/loss/loss_100.npy'
-path_2 = '../DBN_results/loss/loss_196.npy'
-path_3 = '../DBN_results/loss/loss_400.npy'
-
-path_4 = '../DBN_results/loss/loss.eps'
 
 
-loss_1 = np.load(path_1)
-loss_2 = np.load(path_2)
-loss_3 = np.load(path_3)
+path_4 = '../DBN_results/sparsity/squared_weight_196.npy'
+path_5 = '../DBN_results/sparsity/sparsity_params_196.npy'
 
-print(loss_1.shape)
+squaredw = np.load(path_4)
+sparsity = np.load(path_5)
 
-x = np.arange(len(loss_1))
+print(squaredw.shape)
+print(sparsity.shape)
 
-plt.plot(x, loss_1, 'r--')
-plt.plot(x, loss_2, 'm-.')
-plt.plot(x, loss_3, 'b')
-plt.xlabel('Number of epoches')
-plt.ylabel('Training Loss')
-plt.axis([0, 400, 2, 8])
-plt.legend([ 'VPF(100)', 'VPF(196)', 'VPF(400)'], loc='best')
-#plt.title('Adam Training Loss')
-plt.grid(False)
-#plt.show()
-plt.savefig(path_4)
+x = np.arange(len(squaredw))
+
+plt.plot(x, squaredw, 'r--')
+# plt.plot(x, sparsity, 'm')
+# plt.xlabel('Number of epoches')
+# plt.ylabel('Training Loss')
+# plt.axis([0, 400, 2, 8])
+# plt.legend([ 'VPF(100)', 'VPF(196)', 'VPF(400)'], loc='best')
+# #plt.title('Adam Training Loss')
+# plt.grid(False)
+plt.show()
+#plt.savefig(path_4)
+
+
+# fig, ax1 = plt.subplots()
+# ax1.plot(x, squaredw, 'r--')
+# ax1.set_xlabel('Number of epoches')
+# # Make the y-axis label, ticks and tick labels match the line color.
+# ax1.set_ylabel('Squared weights W^2', color='b')
+# ax1.tick_params('y', colors='b')
+#
+# ax2 = ax1.twinx()
+# ax2.plot(x, sparsity, 'r')
+# ax2.set_ylabel('Weight sparsity p', color='r')
+# ax2.tick_params('y', colors='r')
+#
+# fig.tight_layout()
+# plt.show()
+
+

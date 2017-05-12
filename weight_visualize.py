@@ -21,7 +21,7 @@ print(W.shape)
 # f1 = np.asarray(W[:,90])
 # f1 = f1.reshape((28, 28))
 # print(f1.shape)
-
+#
 # image = Image.fromarray(
 #         tile_raster_images( X=W.T,
 #                         img_shape=(28, 28),
@@ -35,8 +35,8 @@ print(W.shape)
 # filter = [0, 40, 75, 124, 182, 263,
 #           90, 330, 83, 389, 225, 270,
 #           12, 120, 310, 240]
-
-
+#
+#
 # fig, axes = plt.subplots(nrows=4, ncols=4)
 # cmap = matplotlib.cm.plasma
 # for i in range(16):
@@ -52,45 +52,46 @@ print(W.shape)
 
 
 #############################  Visualize the activations / sparsity ##############
-# data = load_mnist()
-#
-# activations = sigmoid(np.dot(data[:10000], W) + b[W.shape[0]:])
-#
-# activations = np.mean(activations, axis = 0)
-# saveName1 = '../mpf_results/400/activations.eps'
-# fig1 = plt.figure()
-# # ax1 = fig1.add_subplot(111)
-# # ax1.set_title('Mean activations')
-# # plt.imshow( np.asarray(activations),aspect = 'auto')
-# # plt.colorbar()
-# plt.hist(activations, bins=20, color='b')
-# #plt.title('Mean activations of 400 hidden units')
-# plt.xlabel('Mean activation')
-# plt.ylabel('Number of hidden units')
-# #gplt.axis([0, 0.6, 0, 60])
-# fig1.savefig(saveName1)
-#
-# print(np.mean(activations))
+data = load_mnist()
+
+activations = sigmoid(np.dot(data[:10000], W) + b[W.shape[0]:])
+
+activations = np.mean(activations, axis = 0)
+saveName1 = '../mpf_results/400/activations.eps'
+fig1 = plt.figure()
+# ax1 = fig1.add_subplot(111)
+# ax1.set_title('Mean activations')
+# plt.imshow( np.asarray(activations),aspect = 'auto')
+# plt.colorbar()
+plt.hist(activations, bins=20, color='b')
+#plt.title('Mean activations of 400 hidden units')
+plt.xlabel('Mean activation')
+plt.ylabel('Number of hidden units')
+plt.axis([-0.01, 0.61, 0, 60])
+#plt.xlim(0, 0.6)
+fig1.savefig(saveName1)
+
+print(np.mean(activations))
 
 
 ###### visualize the weight with tile_rater_image ####
-W1 = []
-for i in range(25):
-    j = np.random.randint(low=0, high=W.shape[1])
-    W1.append(W[:,j])
-
-
-W1 = np.asarray(W1)
-# print(W1.shape)
-# W1 = W[:,:100].T
-
-visible_units = 784
-
-tile_shape = (5, 5)
-image = Image.fromarray(
-    tile_raster_images(X=W1,
-                    img_shape=(28, 28),
-                    tile_shape=tile_shape,
-                    tile_spacing=(1, 1)
-                ))
-image.save(saveName)
+# W1 = []
+# for i in range(25):
+#     j = np.random.randint(low=0, high=W.shape[1])
+#     W1.append(W[:,j])
+#
+#
+# W1 = np.asarray(W1)
+# # print(W1.shape)
+# # W1 = W[:,:100].T
+#
+# visible_units = 784
+#
+# tile_shape = (5, 5)
+# image = Image.fromarray(
+#     tile_raster_images(X=W1,
+#                     img_shape=(28, 28),
+#                     tile_shape=tile_shape,
+#                     tile_spacing=(1, 1)
+#                 ))
+# image.save(saveName)
