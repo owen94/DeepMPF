@@ -28,14 +28,14 @@ from DBM import *
 # path_b = '../DBM_results/Samples/196_64/bias_599.npy'
 # savepath1 = '../DBM_results/Samples/196_64'
 
-path_w = '../DBN_results/Samples/196_64/weight_599.npy'
-path_b = '../DBN_results/Samples/196_64/bias_599.npy'
-savepath1 = '../DBN_results/Samples/196_64'
+path_w = '../DBN_results/Samples/196_196_64/weight_199.npy'
+path_b = '../DBN_results/Samples/196_196_64/bias_199.npy'
+savepath1 = '../DBN_results/Samples/196_196_64'
 
 
 W = np.load(path_w)
 b = np.load(path_b)
-hidden_list = [784,196,64]
+hidden_list = [784,196,196, 64]
 
 num_rbm = len(hidden_list) -1
 
@@ -53,7 +53,7 @@ image_data = np.zeros(
 )
 
 for idx in range(n_samples):
-    persistent_vis_chain = np.random.randint(2,size=(n_chains, hidden_list[-1]))
+    persistent_vis_chain = np.random.randint(2,size=(n_chains, hidden_list[-1])) 
 
     v_samples = persistent_vis_chain
 

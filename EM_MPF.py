@@ -100,6 +100,8 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
     saveName_w = None
     saveName_b = None
     mean_epoch_error = []
+    sparsity_parameter = []
+    squared_weights = []
 
     start_time = timeit.default_timer()
 
@@ -131,7 +133,17 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
         print('The cost for mpf in epoch %d is %f'% (em_epoch,mean_epoch_error[-1]))
 
 
-        if int(em_epoch+1) % 20 ==0:
+        X=(mpf_optimizer.W.get_value(borrow = True)[:visible_units,visible_units:])
+
+        squared_w = np.sum(X**2)/hidden_units
+        squared_weights+=[squared_w]
+
+        p_sparsity = np.sum( (np.sum(X**2, axis=0)**2) / np.sum(X**4, axis=0) )/ (visible_units*hidden_units)
+
+        sparsity_parameter += [p_sparsity]
+
+
+        if int(em_epoch+1) % 100 ==0:
 
             saveName = path + '/weights_' + str(em_epoch) + '.png'
             tile_shape = (10, hidden_units//10)
@@ -240,6 +252,12 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
     saveloss = path  + '/loss_' + str(hidden_units) + '.npy'
     np.save(saveloss, mean_epoch_error)
 
+    savesparisty = path  + '/sparsity_params_' + str(hidden_units) + '.npy'
+    np.save(savesparisty, savesparisty)
+
+    savesquaredweight = path  + '/squared_weight_' + str(hidden_units) + '.npy'
+    np.save(savesquaredweight, squared_weights)
+
     show_loss(savename= loss_savename, epoch_error= mean_epoch_error)
 
     end_time = timeit.default_timer()
@@ -257,7 +275,7 @@ if __name__ == '__main__':
     learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [100, 196, 400]
+    hidden_units_list = [196, 400]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [.1]
