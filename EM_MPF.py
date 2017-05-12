@@ -13,8 +13,8 @@ plt.switch_backend('agg')
 from utils_mpf import *
 
 
-def em_mpf(hidden_units,learning_rate, epsilon, epoch = 100,  decay =0.001,  batch_sz = 20, dataset = None,
-           explicit_EM= False):
+def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  batch_sz = 40, dataset = None,
+           explicit_EM= True):
 
     ################################################################
     ################## Loading the Data        #####################
@@ -69,6 +69,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 100,  decay =0.001,  bat
     mpf_optimizer = dmpf_optimizer(
         epsilon=epsilon,
         explicit_EM= explicit_EM,
+        hidden_units= hidden_units,
         W = W,
         b = b,
         input = x,
@@ -173,7 +174,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 100,  decay =0.001,  bat
                 )
             )
             # end-snippet-6 start-snippet-7
-            plot_every = 10000
+            plot_every = 1
             # define one step of Gibbs sampling (mf = mean-field) define a
             # function that does `plot_every` steps before returning the
             # sample for plotting
@@ -269,7 +270,7 @@ if __name__ == '__main__':
                 for decay in decay_list:
                     for learning_rate in learning_rate_list:
                             savename_w, savename_b = em_mpf(hidden_units = hidden_units,learning_rate = learning_rate, epsilon = 0.01,decay=decay,
-                                   batch_sz=batch_size, explicit_EM=False)
+                                   batch_sz=batch_size, explicit_EM=True)
 
 
 
