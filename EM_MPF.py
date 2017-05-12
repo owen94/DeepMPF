@@ -235,6 +235,10 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 100,  decay =0.001,  bat
 
 
     loss_savename = path + '/train_loss.eps'
+
+    saveloss = path  + '/loss_' + str(hidden_units) + '.npy'
+    np.save(saveloss, mean_epoch_error)
+
     show_loss(savename= loss_savename, epoch_error= mean_epoch_error)
 
     end_time = timeit.default_timer()
@@ -252,12 +256,12 @@ if __name__ == '__main__':
     learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [196]
+    hidden_units_list = [100, 196, 400]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [.1]
     batch_list = [40]
-    decay_list = [0.0001,0, 0.001]
+    decay_list = [0.0001]
 
     for batch_size in batch_list:
         for n_samples in n_samples_list:
