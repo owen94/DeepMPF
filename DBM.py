@@ -1,5 +1,5 @@
 '''
-This file provide a training procedure regarding the Deep boltzmann machine.
+...This file provide a training procedure regarding the Deep boltzmann machine.
 DBM differenciate from DBN since it is undirected graphical model.
 '''
 from utils_mpf import *
