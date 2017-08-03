@@ -17,11 +17,14 @@ import numpy
 
 import theano
 import theano.tensor as T
-import os
+import os, pickle
+import numpy as np
+import gzip
+from sklearn import  preprocessing
 
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from utils_mpf import *
+from utils_mpf import tile_raster_images
 
 
 # start-snippet-1
@@ -510,7 +513,7 @@ def test_rbm(learning_rate=0.01, training_epochs=6,
     np.save(path_mean_lld, mean_lld)
     np.save(path_std_lld, std_lld)
 
-    plt.errorbar(np.arange(len(mean_lld)), mean_lld, std_lld)
+    #plt.errorbar(np.arange(len(mean_lld)), mean_lld, std_lld)
     print(mean_lld)
     print(std_lld)
 
