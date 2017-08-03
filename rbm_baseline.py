@@ -340,7 +340,7 @@ class RBM(object):
         return cross_entropy
 
 
-def test_rbm(learning_rate=0.01, training_epochs=6,
+def test_rbm(learning_rate=0.01, training_epochs=400,
              dataset='mnist.pkl.gz', batch_size=20,
              n_chains=20, n_samples=10,
              n_hidden=196):
