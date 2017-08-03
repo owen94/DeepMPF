@@ -52,6 +52,7 @@ image_data = np.zeros(
     (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
 )
 
+
 for idx in range(n_samples):
     persistent_vis_chain = np.random.randint(2,size=(n_chains, hidden_list[-1])) 
 
