@@ -434,13 +434,14 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
             # np.save(path_b,b)
             lld = []
             for n_test_ll in range(20):
-                samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=5)
+                samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=100)
                 a_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
                 a_lld = np.mean(np.array(a_lld))
                 lld  += [a_lld]
 
             epoch_mean_lld = np.mean(np.array(lld))
             epoch_std_lld = np.std(np.array(lld))
+            print('the lld for epoch {} is {}'.format(epoch,epoch_mean_lld))
 
             mean_lld += [epoch_mean_lld]
             std_lld += [epoch_std_lld]
@@ -455,7 +456,7 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
             # np.save(path_w,W)
             # np.save(path_b,b)
             lld = []
-            print('starting computing log-likelihood..........')
+            #print('starting computing log-likelihood..........')
             for n_test_ll in range(20):
                 samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=5)
                 a_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
@@ -464,6 +465,7 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
 
             epoch_mean_lld = np.mean(np.array(lld))
             epoch_std_lld = np.std(np.array(lld))
+            print('the lld for epoch {} is {}'.format(epoch,epoch_mean_lld))
 
             mean_lld += [epoch_mean_lld]
             std_lld += [epoch_std_lld]
