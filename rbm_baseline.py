@@ -41,29 +41,6 @@ class RBM(object):
         numpy_rng=None,
         theano_rng=None
     ):
-        """
-        RBM constructor. Defines the parameters of the model along with
-        basic operations for inferring hidden from visible (and vice-versa),
-        as well as for performing CD updates.
-
-        :param input: None for standalone RBMs or symbolic variable if RBM is
-        part of a larger graph.
-
-        :param n_visible: number of visible units
-
-        :param n_hidden: number of hidden units
-
-        :param W: None for standalone RBMs or symbolic variable pointing to a
-        shared weight matrix in case RBM is part of a DBN network; in a DBN,
-        the weights are shared between RBMs and layers of a MLP
-
-        :param hbias: None for standalone RBMs or symbolic variable pointing
-        to a shared hidden units bias vector in case RBM is part of a
-        different network
-
-        :param vbias: None for standalone RBMs or a symbolic variable
-        pointing to a shared visible units bias
-        """
 
         self.n_visible = n_visible
         self.n_hidden = n_hidden
@@ -164,7 +141,8 @@ class RBM(object):
         return [pre_sigmoid_h1, h1_mean, h1_sample]
 
     def propdown(self, hid):
-        '''This function propagates the hidden units activation downwards to
+        '''
+        This function propagates the hidden units activation downwards to
         the visible units
 
         Note that we return also the pre_sigmoid_activation of the
@@ -455,7 +433,6 @@ def test_rbm(learning_rate=0.01, training_epochs=6,
             # np.save(path_w,W)
             # np.save(path_b,b)
             lld = []
-            print('starting computing log-likelihood..........')
             for n_test_ll in range(20):
                 samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=5)
                 a_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
