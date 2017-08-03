@@ -24,7 +24,7 @@ from sklearn import  preprocessing
 
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from utils_mpf import tile_raster_images
+from utils_mpf import tile_raster_images, load_data
 
 
 # start-snippet-1
