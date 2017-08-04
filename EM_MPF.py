@@ -266,15 +266,15 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 200,  decay =0.0001,  ba
 
         if em_epoch % 10 == 0:
 
-            W = mpf_optimizer.W.get_value(borrow=True)
-            b_vis = mpf_optimizer.b.get_value(borrow=True)[:visible_units]
-            b_h = mpf_optimizer.b.get_value(borrow=True)[visible_units:]
+            W_lld = mpf_optimizer.W.get_value(borrow=True)
+            b_vis_lld = mpf_optimizer.b.get_value(borrow=True)[:visible_units]
+            b_h_lld = mpf_optimizer.b.get_value(borrow=True)[visible_units:]
 
             lld_1 = []
             lld_2 = []
             for n_test_ll in range(10):
 
-                samples = for_gpu_sample(W=W, b0=b_vis,b1=b_h,train_data=training_data, n_steps=5)
+                samples = for_gpu_sample(W=W_lld, b0=b_vis_lld,b1=b_h_lld,train_data=training_data, n_steps=5)
 
                 image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
                 image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
