@@ -177,7 +177,7 @@ class DBM(object):
         return cost, updates
 
 
-def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 400):
+def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 200):
 
     data = load_mnist()
 
@@ -351,7 +351,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             image = Image.fromarray(image_data)
             image.save(path + '/samples_' + str(n_epoch) + '.png')
 
-        if n_epoch % 5 == 0:
+        if n_epoch % 10 == 0:
             W = []
             b = []
             for i in range(num_rbm):
@@ -379,7 +379,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             error_bar_train_lld = []
             error_bar_test_lld = []
 
-            for kk in range(2):
+            for kk in range(10):
 
                 feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
                 feed_data = feed_samplor.get_mean_activation(input_data= training_data)
@@ -412,7 +412,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
                 # comppute the log-likelihood for the test data
                 epoch_test_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=10)
                 error_bar_test_lld += [np.mean(np.array(epoch_test_lld))]
-
+                print(error_bar_test_lld)
 
             train_lld += [np.mean(np.array(error_bar_train_lld))]
             test_lld += [np.mean(np.array(error_bar_test_lld))]
