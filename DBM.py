@@ -376,48 +376,52 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             #     feed_w = W[i][:feed_vis_units,feed_vis_units:]
             #     feed_b = b[i][feed_vis_units:]
             #     feed_data = sigmoid(np.dot(feed_data, feed_w) + feed_b)
-            feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
-            feed_data = feed_samplor.get_mean_activation(input_data= training_data)
 
-            feed_mean_activation = np.mean(feed_data, axis=0)
-            feed_initial = np.random.binomial(n=1, p= feed_mean_activation, size=(n_sample, hidden_list[-1]))
-            ###########################################################
 
-            ######### generate the parzen sample to compute the model distribution ###########
-            v_samples = feed_initial
-            for i in range(num_rbm):
-                vis_units = hidden_list[num_rbm-i - 1]
-                W_sample = W[num_rbm - i -1 ][:vis_units,vis_units:]
-                b_down = b[num_rbm - i -1 ][:vis_units]
-                b_up = b[num_rbm - i -1 ][vis_units:]
+            for i in range(1):
 
-                for j in range(plot_every):
-                    downact1 = sigmoid(np.dot(v_samples,W_sample.T) + b_down )
-                    down_sample1 = np.random.binomial(n=1, p= downact1)
-                    upact1 = sigmoid(np.dot(down_sample1,W_sample)+b_up)
-                    v_samples = np.random.binomial(n=1,p=upact1)
+                feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
+                feed_data = feed_samplor.get_mean_activation(input_data= training_data)
 
-                v_samples = down_sample1
+                feed_mean_activation = np.mean(feed_data, axis=0)
+                feed_initial = np.random.binomial(n=1, p= feed_mean_activation, size=(n_sample, hidden_list[-1]))
+                ###########################################################
 
-            parzen_sample = downact1
-            # compute the log-likelihood for the training data
-            epoch_train_lld = get_ll(x=train_data[:10000],
-                                     gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=20)
-            train_mean_lld = np.mean(np.array(epoch_train_lld))
-            print(np.array(epoch_train_lld))
-            train_std_lld = np.std(np.array(epoch_train_lld))
-            print(train_lld)
-            train_lld += [train_mean_lld]
-            train_std += [train_std_lld]
+                ######### generate the parzen sample to compute the model distribution ###########
+                v_samples = feed_initial
+                for i in range(num_rbm):
+                    vis_units = hidden_list[num_rbm-i - 1]
+                    W_sample = W[num_rbm - i -1 ][:vis_units,vis_units:]
+                    b_down = b[num_rbm - i -1 ][:vis_units]
+                    b_up = b[num_rbm - i -1 ][vis_units:]
 
-            # comppute the log-likelihood for the test data
-            epoch_test_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=10)
-            test_mean_lld = np.mean(np.array(epoch_test_lld))
-            test_std_lld = np.std(np.array(epoch_test_lld))
-            test_lld += [test_mean_lld]
-            test_std += [test_std_lld]
+                    for j in range(plot_every):
+                        downact1 = sigmoid(np.dot(v_samples,W_sample.T) + b_down )
+                        down_sample1 = np.random.binomial(n=1, p= downact1)
+                        upact1 = sigmoid(np.dot(down_sample1,W_sample)+b_up)
+                        v_samples = np.random.binomial(n=1,p=upact1)
 
-            print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch, train_mean_lld, test_mean_lld))
+                    v_samples = down_sample1
+
+                parzen_sample = downact1
+                # compute the log-likelihood for the training data
+                epoch_train_lld = get_ll(x=train_data[:10000],
+                                         gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=20)
+                train_mean_lld = np.mean(np.array(epoch_train_lld))
+                print(np.array(epoch_train_lld))
+                train_std_lld = np.std(np.array(epoch_train_lld))
+                print(train_lld)
+                train_lld += [train_mean_lld]
+                train_std += [train_std_lld]
+
+                # comppute the log-likelihood for the test data
+                epoch_test_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=10)
+                test_mean_lld = np.mean(np.array(epoch_test_lld))
+                test_std_lld = np.std(np.array(epoch_test_lld))
+                test_lld += [test_mean_lld]
+                test_std += [test_std_lld]
+
+                print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch, train_mean_lld, test_mean_lld))
 
     path_1 = path + '/train_lld.npy'
     path_2 = path + '/train_std.npy'
@@ -428,7 +432,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
     np.save(path_1, train_lld)
     np.save(path_2, train_std)
     np.save(path_3, test_lld)
-    np.save(path_4, test_lld)
+    np.save(path_4, test_std)
 
     print('...............................................')
     print(train_lld)
