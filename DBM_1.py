@@ -379,7 +379,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             error_bar_train_lld = []
             error_bar_test_lld = []
 
-            for kk in range(2):
+            for kk in range(10):
 
                 feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
                 feed_data = feed_samplor.get_mean_activation(input_data= training_data)
@@ -422,7 +422,6 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 
             print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch, train_lld[-1],
                                                                              test_lld[-1]))
-
 
     path_1 = path + '/train_lld.npy'
     path_2 = path + '/train_std.npy'
