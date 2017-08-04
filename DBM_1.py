@@ -415,10 +415,10 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 
 
             print(error_bar_test_lld)
-            train_lld += [np.mean(np.array(error_bar_train_lld))]
-            train_std += [np.std(np.array(error_bar_train_lld))]
-            test_lld += [np.mean(np.array(error_bar_test_lld))]
-            train_std += [np.std(np.array(error_bar_test_lld))]
+            # train_lld += [np.mean(np.array(error_bar_train_lld))]
+            # #train_std += [np.std(np.array(error_bar_train_lld))]
+            # test_lld += [np.mean(np.array(error_bar_test_lld))]
+            #train_std += [np.std(np.array(error_bar_test_lld))]
 
             print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch, train_lld[-1],
                                                                              test_lld[-1]))
