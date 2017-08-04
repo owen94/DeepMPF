@@ -379,7 +379,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             error_bar_train_lld = []
             error_bar_test_lld = []
 
-            for kk in range(10):
+            for kk in range(2):
 
                 feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
                 feed_data = feed_samplor.get_mean_activation(input_data= training_data)
