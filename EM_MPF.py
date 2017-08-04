@@ -11,9 +11,10 @@ import os
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 from utils_mpf import *
+from comp_likelihood import *
 
 
-def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  batch_sz = 40, dataset = None,
+def em_mpf(hidden_units,learning_rate, epsilon, epoch = 200,  decay =0.0001,  batch_sz = 40, dataset = None,
            explicit_EM= True):
 
     ################################################################
@@ -103,11 +104,22 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
     sparsity_parameter = []
     squared_weights = []
 
+    ######## computing the lld ###############################
+    lld_data = 'mnist.pkl.gz'
+    f = gzip.open(lld_data, 'rb')
+    train_set, valid_set, test_set = pickle.load(f,encoding="bytes")
+    f.close()
+
+    binarizer = preprocessing.Binarizer(threshold=0.5)
+    training_data =  binarizer.transform(train_set[0])
+    test_data = test_set[0]
+    train_data = train_set[0]
 
     train_lld = []
     train_std = []
     test_lld = []
     test_std = []
+    #########################################################
 
     start_time = timeit.default_timer()
 
@@ -252,16 +264,54 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
             # end-snippet-7
             # os.chdir('../')
 
-        if em_epoch % 5 == 0:
+        if em_epoch % 10 == 0:
 
+            W = mpf_optimizer.W.get_value(borrow=True)
+            b_vis = mpf_optimizer.b.get_value(borrow=True)[:visible_units]
+            b_h = mpf_optimizer.b.get_value(borrow=True)[visible_units:]
 
+            lld_1 = []
+            lld_2 = []
+            for n_test_ll in range(10):
 
+                samples = for_gpu_sample(W=W, b0=b_vis,b1=b_h,train_data=training_data, n_steps=5)
 
+                image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
+                image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
+                    X= samples[:30,:],
+                    img_shape=(28, 28),
+                    tile_shape=(1, 30),
+                    tile_spacing=(1, 1)
+                        )
+                image = Image.fromarray(image_data)
+                image.show()
+                a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+                a_lld = np.mean(np.array(a_lld))
+                lld_1  += [a_lld]
 
+                b_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+                b_lld = np.mean(np.array(b_lld))
+                lld_2  += [b_lld]
 
+            print(lld_2)
 
+            train_lld += [np.mean(np.array(lld_1))]
+            train_std +=  [np.std(np.array(lld_1))]
 
+            test_lld += [np.mean(np.array(lld_2))]
+            test_std +=  [np.std(np.array(lld_2))]
 
+            print('the lld for epoch {} is train {} test {}'.format(em_epoch, train_lld[-1], test_lld[-1]))
+
+    path_train_lld = path + '/train_lld.npy'
+    path_train_std = path + '/train_std.npy'
+    np.save(path_train_lld, train_lld)
+    np.save(path_train_std, train_std)
+
+    path_test_lld = path + '/test_lld.npy'
+    path_test_std = path + '/test_std.npy'
+    np.save(path_test_lld, test_lld)
+    np.save(path_test_std, test_std)
 
     loss_savename = path + '/train_loss.eps'
 
@@ -288,13 +338,13 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
 if __name__ == '__main__':
 
 
-    learning_rate_list = [0.001]
+    learning_rate_list = [0.001, 0.0001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [196, 400]
+    hidden_units_list = [196, 400, 100]
     n_samples_list = [1]
     beta_list = [0]
-    sparsity_list = [.1]
+    sparsity_list = [0]
     batch_list = [40]
     decay_list = [0.0001]
 
