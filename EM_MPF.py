@@ -103,6 +103,12 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
     sparsity_parameter = []
     squared_weights = []
 
+
+    train_lld = []
+    train_std = []
+    test_lld = []
+    test_std = []
+
     start_time = timeit.default_timer()
 
     for em_epoch in range(out_epoch):
@@ -247,7 +253,12 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
             # os.chdir('../')
 
         if em_epoch % 5 == 0:
-            
+
+
+
+
+
+
 
 
 

@@ -340,7 +340,7 @@ class RBM(object):
         return cross_entropy
 
 
-def test_rbm(learning_rate=0.01, training_epochs=400,
+def test_rbm(learning_rate=0.01, training_epochs=200,
              dataset='mnist.pkl.gz', batch_size=20,
              n_chains=20, n_samples=10,
              n_hidden=196):
@@ -374,18 +374,17 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
 
     # get the cost and the gradient corresponding to one step of CD-15
     cost, updates = rbm.get_cost_updates(lr=learning_rate,
-                                         persistent=None, k=1)
+                                         persistent=persistent_chain, k=1)
 
     #################################
     #     Training the RBM          #
     #################################
 
-    path = '../rbm_base/'
+    path = '../rbm_persistent/'
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    mean_lld = []
-    std_lld = []
+
     lld_data = 'mnist.pkl.gz'
     f = gzip.open(lld_data, 'rb')
     train_set, valid_set, test_set = pickle.load(f,encoding="bytes")
@@ -394,6 +393,7 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
     binarizer = preprocessing.Binarizer(threshold=0.5)
     training_data =  binarizer.transform(train_set[0])
     test_data = test_set[0]
+    train_data = train_set[0]
 
 
     train_rbm = theano.function(
@@ -409,6 +409,11 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
     plotting_time = 0.
     start_time = timeit.default_timer()
 
+    train_lld = []
+    train_std = []
+    test_lld = []
+    test_std = []
+
     # go through training epochs
     for epoch in range(training_epochs):
 
@@ -423,52 +428,33 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
         plotting_start = timeit.default_timer()
 
 
-        if epoch <= 50 and epoch % 5 ==0:
+        if epoch % 10 ==0:
             W = rbm.W.get_value(borrow=True)
             b_vis = rbm.vbias.get_value(borrow=True)
             b_h = rbm.hbias.get_value(borrow=True)
 
-            # path_w = path + 'weights_' + str(epoch) + '.npy'
-            # path_b = path + 'bias_' + str(epoch) + '.npy'
-            # np.save(path_w,W)
-            # np.save(path_b,b)
-            lld = []
-            for n_test_ll in range(20):
-                samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=100)
-                a_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
-                a_lld = np.mean(np.array(a_lld))
-                lld  += [a_lld]
+            lld_1 = []
+            lld_2 = []
+            for n_test_ll in range(10):
 
-            epoch_mean_lld = np.mean(np.array(lld))
-            epoch_std_lld = np.std(np.array(lld))
-            print('the lld for epoch {} is {}'.format(epoch,epoch_mean_lld))
-
-            mean_lld += [epoch_mean_lld]
-            std_lld += [epoch_std_lld]
-
-        elif epoch % 20 == 0:
-            W = rbm.W.get_value(borrow=True)
-            b_vis = rbm.vbias.get_value(borrow=True)
-            b_h = rbm.hbias.get_value(borrow=True)
-
-            # path_w = path + 'weights_' + str(epoch) + '.npy'
-            # path_b = path + 'bias_' + str(epoch) + '.npy'
-            # np.save(path_w,W)
-            # np.save(path_b,b)
-            lld = []
-            #print('starting computing log-likelihood..........')
-            for n_test_ll in range(20):
                 samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=5)
-                a_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+                a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
                 a_lld = np.mean(np.array(a_lld))
-                lld  += [a_lld]
+                lld_1  += [a_lld]
 
-            epoch_mean_lld = np.mean(np.array(lld))
-            epoch_std_lld = np.std(np.array(lld))
-            print('the lld for epoch {} is {}'.format(epoch,epoch_mean_lld))
+                b_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+                b_lld = np.mean(np.array(b_lld))
+                lld_2  += [b_lld]
 
-            mean_lld += [epoch_mean_lld]
-            std_lld += [epoch_std_lld]
+            print(lld_2)
+
+            train_lld += [np.mean(np.array(lld_1))]
+            train_std +=  [np.std(np.array(lld_1))]
+
+            test_lld += [np.mean(np.array(lld_2))]
+            test_std +=  [np.std(np.array(lld_2))]
+
+            print('the lld for epoch {} is train {} test {}'.format(epoch, train_lld[-1], test_lld[-1]))
 
 
         # Construct image from the weight matrix
@@ -487,14 +473,15 @@ def test_rbm(learning_rate=0.01, training_epochs=400,
 
     end_time = timeit.default_timer()
 
-    path_mean_lld = path + 'mean_lld.npy'
-    path_std_lld = path + 'std_lld.npy'
-    np.save(path_mean_lld, mean_lld)
-    np.save(path_std_lld, std_lld)
+    path_train_lld = path + 'train_lld.npy'
+    path_train_std = path + 'train_std.npy'
+    np.save(path_train_lld, train_lld)
+    np.save(path_train_std, train_std)
 
-    #plt.errorbar(np.arange(len(mean_lld)), mean_lld, std_lld)
-    print(mean_lld)
-    print(std_lld)
+    path_test_lld = path + 'test_lld.npy'
+    path_test_std = path + 'test_std.npy'
+    np.save(path_test_lld, test_lld)
+    np.save(path_test_std, test_std)
 
     pretraining_time = (end_time - start_time) - plotting_time
 
