@@ -351,7 +351,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             image = Image.fromarray(image_data)
             image.save(path + '/samples_' + str(n_epoch) + '.png')
 
-        if epoch % 5 == 0:
+        if n_epoch % 5 == 0:
             W = []
             b = []
             for i in range(num_rbm):
@@ -415,7 +415,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             test_lld += [test_mean_lld]
             test_std += [test_std_lld]
 
-            print('The loglikehood in epoch {} is: train {}, test {}'.format(epoch, train_mean_lld, test_mean_lld))
+            print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch, train_mean_lld, test_mean_lld))
 
     path_1 = path + '/train_lld.npy'
     path_2 = path + '/train_std.npy'
