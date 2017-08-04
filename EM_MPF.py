@@ -266,7 +266,7 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 200,  decay =0.0001,  ba
 
         if em_epoch % 10 == 0:
 
-            W_lld = mpf_optimizer.W.get_value(borrow=True)
+            W_lld = mpf_optimizer.W.get_value(borrow=True)[:visible_units,visible_units:]
             b_vis_lld = mpf_optimizer.b.get_value(borrow=True)[:visible_units]
             b_h_lld = mpf_optimizer.b.get_value(borrow=True)[visible_units:]
 
