@@ -82,7 +82,19 @@ def for_gpu_sample(W, b0, b1, train_data, n_steps = 5):
 
 
 def sampling_dbm(W_file, b_file, n_rbm = 2):
+
+    dataset = 'mnist.pkl.gz'
+    f = gzip.open(dataset, 'rb')
+    train_set, valid_set, test_set = pickle.load(f,encoding="bytes")
+    f.close()
+
+    binarizer = preprocessing.Binarizer(threshold=0.5)
+    training_data =  binarizer.transform(train_set[0])
+    test_data = test_set[0]
+
     n_sample = 10000
+
+
     W = np.load(W_file)
     b = np.load(b_file)
 
@@ -90,6 +102,9 @@ def sampling_dbm(W_file, b_file, n_rbm = 2):
         hidden_list = [784, 196, 64]
     else:
         hidden_list = [784, 196, 196, 64]
+
+
+
 
 def parzen(x, mu, sigma):
     '''
