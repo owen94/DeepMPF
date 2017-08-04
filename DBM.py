@@ -129,7 +129,7 @@ class DBM(object):
 
 
 
-    def get_cost_update(self,decay_list = [], learning_rate = 0.0001):
+    def get_cost_update(self,decay_list = [], learning_rate = 0.001):
         '''
         :param undirected_act: The input from the forward and backward pass
         :return: the cost function and the updates
@@ -177,7 +177,7 @@ class DBM(object):
         return cost, updates
 
 
-def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 200):
+def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch = 400):
 
     data = load_mnist()
 
@@ -351,7 +351,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             image = Image.fromarray(image_data)
             image.save(path + '/samples_' + str(n_epoch) + '.png')
 
-        if n_epoch % 10 == 0:
+        if n_epoch % 5 == 0:
             W = []
             b = []
             for i in range(num_rbm):
@@ -376,52 +376,52 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             #     feed_w = W[i][:feed_vis_units,feed_vis_units:]
             #     feed_b = b[i][feed_vis_units:]
             #     feed_data = sigmoid(np.dot(feed_data, feed_w) + feed_b)
-            error_bar_train_lld = []
-            error_bar_test_lld = []
+            error_bar_lld = []
+            error_bar_std = []
 
-            for kk in range(10):
+            #for kk in range(1):
 
-                feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
-                feed_data = feed_samplor.get_mean_activation(input_data= training_data)
+            feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
+            feed_data = feed_samplor.get_mean_activation(input_data= training_data)
 
-                feed_mean_activation = np.mean(feed_data, axis=0)
-                feed_initial = np.random.binomial(n=1, p= feed_mean_activation, size=(n_sample, hidden_list[-1]))
-                ###########################################################
+            feed_mean_activation = np.mean(feed_data, axis=0)
+            feed_initial = np.random.binomial(n=1, p= feed_mean_activation, size=(n_sample, hidden_list[-1]))
+            ###########################################################
 
-                ######### generate the parzen sample to compute the model distribution ###########
-                v_samples = feed_initial
-                for i in range(num_rbm):
-                    vis_units = hidden_list[num_rbm-i - 1]
-                    W_sample = W[num_rbm - i -1 ][:vis_units,vis_units:]
-                    b_down = b[num_rbm - i -1 ][:vis_units]
-                    b_up = b[num_rbm - i -1 ][vis_units:]
+            ######### generate the parzen sample to compute the model distribution ###########
+            v_samples = feed_initial
+            for i in range(num_rbm):
+                vis_units = hidden_list[num_rbm-i - 1]
+                W_sample = W[num_rbm - i -1 ][:vis_units,vis_units:]
+                b_down = b[num_rbm - i -1 ][:vis_units]
+                b_up = b[num_rbm - i -1 ][vis_units:]
 
-                    for j in range(plot_every):
-                        downact1 = sigmoid(np.dot(v_samples,W_sample.T) + b_down )
-                        down_sample1 = np.random.binomial(n=1, p= downact1)
-                        upact1 = sigmoid(np.dot(down_sample1,W_sample)+b_up)
-                        v_samples = np.random.binomial(n=1,p=upact1)
+                for j in range(plot_every):
+                    downact1 = sigmoid(np.dot(v_samples,W_sample.T) + b_down )
+                    down_sample1 = np.random.binomial(n=1, p= downact1)
+                    upact1 = sigmoid(np.dot(down_sample1,W_sample)+b_up)
+                    v_samples = np.random.binomial(n=1,p=upact1)
 
-                    v_samples = down_sample1
+                v_samples = down_sample1
 
-                parzen_sample = downact1
-                # compute the log-likelihood for the training data
-                epoch_train_lld = get_ll(x=train_data[:10000],
-                                         gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=20)
-                error_bar_train_lld += [np.mean(np.array(epoch_train_lld))]
-                # comppute the log-likelihood for the test data
-                epoch_test_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=10)
-                error_bar_test_lld +=  [np.mean(np.array(epoch_test_lld))]
+            parzen_sample = downact1
+            # compute the log-likelihood for the training data
+            epoch_train_lld = get_ll(x=train_data[:10000],
+                                     gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=20)
+            train_mean_lld = np.mean(np.array(epoch_train_lld))
+            train_std_lld = np.std(np.array(epoch_train_lld))
+            train_lld += [train_mean_lld]
+            train_std += [train_std_lld]
 
-            print(error_bar_test_lld)
 
-            train_lld += [np.mean(np.array(error_bar_train_lld))]
-            train_std += [np.std(np.array(error_bar_train_lld))]
+            # comppute the log-likelihood for the test data
+            epoch_test_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=10)
+            test_mean_lld = np.mean(np.array(epoch_test_lld))
+            test_std_lld = np.std(np.array(epoch_test_lld))
+            test_lld += [test_mean_lld]
+            test_std += [test_std_lld]
 
-            test_lld += [np.mean(np.array(error_bar_test_lld))]
-            test_std += [np.std(np.array(error_bar_test_lld))]
-
-            print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch,train_lld[-1], test_lld[-1]))
+            print('The loglikehood in epoch {} is: train {}, test {}'.format(n_epoch, train_mean_lld, test_mean_lld))
 
     path_1 = path + '/train_lld.npy'
     path_2 = path + '/train_std.npy'

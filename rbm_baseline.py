@@ -435,26 +435,36 @@ def test_rbm(learning_rate=0.01, training_epochs=200,
 
             lld_1 = []
             lld_2 = []
-            for n_test_ll in range(10):
+            for n_test_ll in range(1):
 
-                samples = for_gpu_sample(W=W,b0=b_vis,b1=b_h,train_data=training_data,n_steps=5)
-                a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
-                a_lld = np.mean(np.array(a_lld))
-                lld_1  += [a_lld]
+                samples = for_gpu_sample(W=W, b0=b_vis,b1=b_h,train_data=training_data,n_steps=100)
 
-                b_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
-                b_lld = np.mean(np.array(b_lld))
-                lld_2  += [b_lld]
-
-            print(lld_2)
-
-            train_lld += [np.mean(np.array(lld_1))]
-            train_std +=  [np.std(np.array(lld_1))]
-
-            test_lld += [np.mean(np.array(lld_2))]
-            test_std +=  [np.std(np.array(lld_2))]
-
-            print('the lld for epoch {} is train {} test {}'.format(epoch, train_lld[-1], test_lld[-1]))
+                image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
+                image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
+                    X= samples[:30,:],
+                    img_shape=(28, 28),
+                    tile_shape=(1, 30),
+                    tile_spacing=(1, 1)
+                        )
+                image = Image.fromarray(image_data)
+                image.show()
+            #     a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+            #     a_lld = np.mean(np.array(a_lld))
+            #     lld_1  += [a_lld]
+            #
+            #     b_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+            #     b_lld = np.mean(np.array(b_lld))
+            #     lld_2  += [b_lld]
+            #
+            # print(lld_2)
+            #
+            # train_lld += [np.mean(np.array(lld_1))]
+            # train_std +=  [np.std(np.array(lld_1))]
+            #
+            # test_lld += [np.mean(np.array(lld_2))]
+            # test_std +=  [np.std(np.array(lld_2))]
+            #
+            # print('the lld for epoch {} is train {} test {}'.format(epoch, train_lld[-1], test_lld[-1]))
 
 
         # Construct image from the weight matrix
