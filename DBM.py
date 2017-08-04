@@ -383,7 +383,6 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             feed_initial = np.random.binomial(n=1, p= feed_mean_activation, size=(n_sample, hidden_list[-1]))
             ###########################################################
 
-
             ######### generate the parzen sample to compute the model distribution ###########
             v_samples = feed_initial
             for i in range(num_rbm):
@@ -402,9 +401,12 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 
             parzen_sample = downact1
             # compute the log-likelihood for the training data
-            epoch_train_lld = get_ll(x=train_data, gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=20)
+            epoch_train_lld = get_ll(x=train_data[:10000],
+                                     gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=20)
             train_mean_lld = np.mean(np.array(epoch_train_lld))
+            print(np.array(epoch_train_lld))
             train_std_lld = np.std(np.array(epoch_train_lld))
+            print(train_lld)
             train_lld += [train_mean_lld]
             train_std += [train_std_lld]
 

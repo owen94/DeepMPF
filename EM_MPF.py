@@ -246,6 +246,11 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 400,  decay =0.0001,  ba
             # end-snippet-7
             # os.chdir('../')
 
+        if em_epoch % 5 == 0:
+            
+
+
+
 
     loss_savename = path + '/train_loss.eps'
 
