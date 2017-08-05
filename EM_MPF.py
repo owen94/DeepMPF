@@ -276,15 +276,15 @@ def em_mpf(hidden_units,learning_rate, epsilon, epoch = 200,  decay =0.0001,  ba
 
                 samples = for_gpu_sample(W=W_lld, b0=b_vis_lld,b1=b_h_lld,train_data=training_data, n_steps=5)
 
-                image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
-                image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
-                    X= samples[:30,:],
-                    img_shape=(28, 28),
-                    tile_shape=(1, 30),
-                    tile_spacing=(1, 1)
-                        )
-                image = Image.fromarray(image_data)
-                image.show()
+                # image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
+                # image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
+                #     X= samples[:30,:],
+                #     img_shape=(28, 28),
+                #     tile_shape=(1, 30),
+                #     tile_spacing=(1, 1)
+                #         )
+                # image = Image.fromarray(image_data)
+                # image.show()
                 a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
                 a_lld = np.mean(np.array(a_lld))
                 lld_1  += [a_lld]
@@ -341,7 +341,7 @@ if __name__ == '__main__':
     learning_rate_list = [0.001, 0.0001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [196, 400, 100]
+    hidden_units_list = [400, 100, 1000]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [0]

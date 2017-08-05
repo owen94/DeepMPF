@@ -70,7 +70,7 @@ def for_gpu_sample(W, b0, b1, train_data, n_steps = 5):
     mean_h = np.mean(activation, axis=0)
     #initial = np.random.normal(loc=mean_h,scale=std_h,size=(10000, 196))
     downact = None
-    initial = np.random.binomial(n=1, p= mean_h, size=(n_sample, 196))
+    initial = np.random.binomial(n=1, p= mean_h, size=(n_sample, W.shape[1]))
     for i in range(n_steps):
         downact = sigmoid(np.dot(initial,W.T) + b0)
         down_sample = np.random.binomial(n=1, p= downact)
