@@ -316,7 +316,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 
             n_chains = 20
             n_samples = 10
-            plot_every = 7
+            plot_every = 5
             image_data = np.zeros(
                 (29 * n_samples + 1, 29 * n_chains - 1), dtype='uint8'
             )
@@ -406,7 +406,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 
                 parzen_sample = downact1
                 # compute the log-likelihood for the training data
-                epoch_train_lld = get_ll(x=train_data[:10000],
+                epoch_train_lld = get_ll(x=train_data[:10],
                                          gpu_parzen=gpu_parzen(mu=parzen_sample,sigma=0.2),batch_size=10)
                 error_bar_train_lld += [np.mean(np.array(epoch_train_lld))]
                 # comppute the log-likelihood for the test data
@@ -454,15 +454,15 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
 if __name__ == '__main__':
 
 
-    learning_rate_list = [0.0001]
+    learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
-    hidden_units_list = [[784, 196, 196, 64]]
+    hidden_units_list = [[784, 400, 196, 64],[784, 1000, 196, 64]]
     n_samples_list = [1]
     beta_list = [0]
     sparsity_list = [0]
     batch_list = [40]
-    decay_list = [[0.0001, 0.01, 0.01, 0.01]]
+    decay_list = [[0.0001, 0.0001, 0.0001, 0.0001]]
 
     undirected_list = [False]
     for undirected in undirected_list:
