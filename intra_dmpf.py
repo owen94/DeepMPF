@@ -68,7 +68,6 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 200,  decay =0.0001,
 
     mpf_optimizer = dmpf_optimizer(
         epsilon=epsilon,
-        explicit_EM= explicit_EM,
         hidden_units= hidden_units,
         W = W,
         b = b,
