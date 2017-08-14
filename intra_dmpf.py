@@ -110,7 +110,7 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 200,  decay =0.0001,
         print('The cost for mpf in epoch %d is %f'% (epoch_i,mean_epoch_error[-1]))
 
 
-        if int(epoch_i+1) % 100 ==0:
+        if int(epoch_i+1) % 5 ==0:
 
                 saveName = path + '/weights_' + str(epoch_i) + '.png'
                 tile_shape = (10, hidden_units//10)
