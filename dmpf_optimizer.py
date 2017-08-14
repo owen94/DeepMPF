@@ -251,7 +251,7 @@ class dmpf_optimizer(object):
             self.rand_h = self.theano_rng.binomial(size=(self.batch_sz,self.hidden_units))
             self.input = T.concatenate( (self.input,self.rand_h), axis = 1)
 
-        assert self.input.shape == (self.batch_sz,self.hidden_units + self.visible_units)
+        #assert self.input.shape == (self.batch_sz,self.hidden_units + self.visible_units)
 
         for i in range(n_round):
 
