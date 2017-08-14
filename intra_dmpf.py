@@ -34,7 +34,7 @@ def mix_in(x, w, b, mix = 1):
     return x
 
 
-def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 80,  decay =0.0001,  batch_sz = 40, dataset = None,
+def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001,  batch_sz = 40, dataset = None,
            n_round = 1):
 
     ################################################################
@@ -144,7 +144,7 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 80,  decay =0.0001, 
                 np.save(saveName_w,W1)
                 np.save(saveName_b,b1)
 
-        if epoch_i % 5 ==0:
+        if epoch_i % 10 ==0:
             n_chains = 20
             n_samples = 10
             plot_every = 5
@@ -166,7 +166,7 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 80,  decay =0.0001, 
                     upact1 = sigmoid(np.dot(down_sample1,W1)+b_up)
                     h_samples = np.random.binomial(n=1,p=upact1)
                     # mix in here
-                    x = np.concatenate(down_sample1,h_samples)
+                    x = np.concatenate((down_sample1,h_samples),axis=1)
                     h_samples = mix_in(x=x,w=W,b=b)[:,visible_units:]
 
                 print(' ... plotting sample ', idx)
