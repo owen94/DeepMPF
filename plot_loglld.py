@@ -13,16 +13,13 @@ path4 = '/Users/liuzuozhu/MyGit/LLD/DBM_196_196_64/decay_1e-05/lr_0.0001/'
 save_path4 = '/Users/liuzuozhu/MyGit/LLD/Samples/DBM_lld.eps'
 
 
-#path4 = '/Users/liuzuozhu/MyGit/Thea_mpf/hidden_100/decay_0.0001/lr_0.001/bsz_40/'
-
+#path4 = '/Users/liuzuozhu/MyGit/Thea_mpf/hidden_1000/decay_0.0001/lr_0.001/bsz_40/'
 
 
 test_lld_1 = np.load(path1 + 'test_lld.npy')
 test_lld_2 = np.load(path2 + 'test_lld.npy')
 #test_lld_3 = np.load(path3 + 'test_lld.npy')
 test_lld_4 = np.load(path4 + 'test_lld.npy')
-
-
 
 
 test_std_1 = np.load(path1 + 'test_std.npy')

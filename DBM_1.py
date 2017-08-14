@@ -279,27 +279,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
         mean_epoch_error += [np.mean(mean_cost)]
         print('The cost for mpf in epoch %d is %f'% (n_epoch,mean_epoch_error[-1]))
 
-
-        # if int(n_epoch+1) % 20 ==0:
-        #
-        #     saveName = path + '/weights_' + str(n_epoch) + '.png'
-        #     tile_shape = (10, hidden_list[1]//10)
-        #
-        #     #displayNetwork(W1.T,saveName=saveName)
-        #
-        #     W = dbm.W[0].get_value(borrow = True)
-        #     visible_units = hidden_list[0]
-        #
-        #     image = Image.fromarray(
-        #         tile_raster_images(  X=(W[:visible_units,visible_units:]).T,
-        #                 img_shape=(28, 28),
-        #                 tile_shape=tile_shape,
-        #                 tile_spacing=(1, 1)
-        #             )
-        #             )
-        #     image.save(saveName)
-
-        if int(n_epoch+1) % 100 ==0:
+        if int(n_epoch+1) % 10 ==0:
             filename = path + '/dbm_' + str(n_epoch) + '.pkl'
             save(filename,dbm)
 
@@ -322,7 +302,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             )
 
             for idx in range(n_samples):
-                persistent_vis_chain = np.random.randint(2,size=(n_chains, hidden_list[-1]))
+                persistent_vis_chain = np.random.randint(2, size=(n_chains, hidden_list[-1]))
 
                 v_samples = persistent_vis_chain
 
@@ -379,7 +359,7 @@ def train_dbm(hidden_list, decay, lr, undirected = False,  batch_sz = 40, epoch 
             error_bar_train_lld = []
             error_bar_test_lld = []
 
-            for kk in range(10):
+            for kk in range(10 ):
 
                 feed_samplor = get_samples(hidden_list=hidden_list, W=W, b=b)
                 feed_data = feed_samplor.get_mean_activation(input_data= training_data)

@@ -25,6 +25,7 @@ f.close()
 binarizer = preprocessing.Binarizer(threshold=0.5)
 training_data =  binarizer.transform(train_set[0])
 test_data = test_set[0]
+train_data = train_set[0]
 
 def sampling_rbm(W_file, b_file, train_data, n_steps = 5):
     # We sample from a single RBM and compute the log-likelihood
@@ -172,46 +173,44 @@ def get_ll(x, gpu_parzen, batch_size=10): # get parzen window log-likelihood
 
 
 def compute_lls():
-    mu = sampling_rbm(W_file= base_path_w,b_file= base_path_b)
-    print(mu.shape)
-    print(test_data.shape)
+    # mu = sampling_rbm(W_file= base_path_w,b_file= base_path_b)
+    # print(mu.shape)
+    # print(test_data.shape)
+    #
+    # image_data = np.zeros(
+    #     (29 * 1 + 1, 29 * 10 - 1), dtype='uint8'
+    # )
+    # image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
+    #         X= mu[:10,:],
+    #         img_shape=(28, 28),
+    #         tile_shape=(1, 10),
+    #         tile_spacing=(1, 1)
+    #     )
+    #
+    # image = Image.fromarray(image_data)
+    # image.show()
 
-    image_data = np.zeros(
-        (29 * 1 + 1, 29 * 10 - 1), dtype='uint8'
-    )
-    image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
-            X= mu[:10,:],
-            img_shape=(28, 28),
-            tile_shape=(1, 10),
-            tile_spacing=(1, 1)
-        )
-
-    image = Image.fromarray(image_data)
-    image.show()
-
+    mu = train_data
     sigma = [0.2]
     num_test = test_data.shape[0]
     log_lld = 0
+    lld = []
 
     for s in sigma:
-        log_lld = 0
-        for i in range(num_test):
-            lld = parzen(x=test_data[i,:], mu= mu, sigma=s)
-            #print('the lld for the {}th sample is {}'.format(i, lld))
-            log_lld += lld
-        print('the lld for sigma {}  is {}'.format(s, log_lld/num_test))
-        lld = batch_parzen(x=test_data,mu=mu,sigma=s)
-        print(lld)
+        # log_lld = 0
+        # for i in range(num_test):
+        #     lld = parzen(x=test_data[i,:], mu= mu, sigma=s)
+        #     #print('the lld for the {}th sample is {}'.format(i, lld))
+        #     log_lld += lld
+        # print('the lld for sigma {}  is {}'.format(s, log_lld/num_test))
+        # #lld = batch_parzen(x=test_data,mu=mu,sigma=s)
+        # $print(lld)
 
-        # lld = get_ll(test_data, gpu_parzen(mu, sigma), batch_size=10)
-        # print( np.mean(np.array(lld))  )
+        l = get_ll(test_data, gpu_parzen(mu, s), batch_size=10)
+        lld += [l]
+    print( np.mean(np.array(lld)))
 
-
-
-
-
-
-
+compute_lls()
 
 
 

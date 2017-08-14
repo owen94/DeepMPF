@@ -81,10 +81,24 @@ class dmpf_optimizer(object):
             self.zero_grad = theano.shared(value=np.asarray(zero_grad,dtype=theano.config.floatX),
                                            name='zero_grad',borrow = True)
 
-
         self.explicit_EM = explicit_EM
 
         self.rho = 0
+
+        self.intra_grad = None
+        if self.intra_grad is None:
+            a = np.ones((visible_units,hidden_units))
+            b = np.zeros((visible_units,visible_units))
+            c = np.ones((hidden_units,hidden_units)) - np.diagflat(np.ones(hidden_units))
+            assert c[0,0] == 0
+
+            intra_grad_u = np.concatenate((b,a), axis = 1)
+            intra_grad_d = np.concatenate((a.T, c), axis=1)
+            intra_grad = np.concatenate((intra_grad_u,intra_grad_d), axis = 0)
+            self.intra_grad = theano.shared(value=np.asarray(intra_grad,dtype=theano.config.floatX),
+                                            name='intra_grad', borrow = True)
+
+
         #self.params = []
 
     def get_dmpf_cost(self, learning_rate = 0.001, decay=0.0001, beta=0, sparsity = 0.2, sparse_decay = 0.9):
@@ -192,6 +206,66 @@ class dmpf_optimizer(object):
         pre_sigmoid_v1, v1_mean, v1_sample = self.sample_v_given_h(h1_sample)
         return [pre_sigmoid_h1, h1_mean, h1_sample,
                 pre_sigmoid_v1, v1_mean, v1_sample]
+
+
+    def intra_dmpf_cost(self, n_round =1,learning_rate = 0.001, decay=0.0001, feed_first = True):
+
+        # feed self.input only as the data samples
+        self.asyc_gibbs(n_round=n_round, feedforward= feed_first) # update self.input
+
+        z = 1/2 - self.input
+        energy_difference = z * (T.dot(self.input,self.W)+ self.b.reshape([1,-1]))
+        cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
+        cost_weight = 0.5 * decay * T.sum(self.W**2)
+        cost += cost_weight
+
+        h = z * T.exp(energy_difference)
+        W_grad = (T.dot(h.T,self.input)+T.dot(self.input.T,h))*self.epsilon/self.batch_sz
+        b_grad = T.mean(h,axis=0)*self.epsilon
+        decay_grad = decay*self.W
+        W_grad += decay_grad
+        # Need to change the self.zero_grad to another multiplier
+        W_grad *= self.intra_grad
+        grads = [W_grad,b_grad]
+
+        updates = Adam(grads=grads, params=self.params, lr=learning_rate)
+
+        return cost, updates
+
+    def one_gibbs(self, node_i):
+        input_w = self.W[:,node_i]
+        input_b = self.b[node_i]
+        activations = T.nnet.sigmoid( T.dot(self.input,input_w) +input_b)
+        flip = self.theano_rng.binomial(size=activations.shape,n=1,p=activations,dtype=theano.config.floatX)
+        update_input = T.set_subtensor(self.input[:,node_i],flip)
+
+        return update_input
+
+    def asyc_gibbs(self,n_round = 1, feedforward = False):
+
+        if feedforward:
+            activation = self.sample_h_given_v(v0_sample=self.input)
+            hidden_samples = activation[2]
+            self.input = T.concatenate((self.input, hidden_samples),axis = 1)
+        else:
+            self.rand_h = self.theano_rng.binomial(size=(self.batch_sz,self.hidden_units))
+            self.input = T.concatenate( (self.input,self.rand_h), axis = 1)
+
+        assert self.input.shape == (self.batch_sz,self.hidden_units + self.visible_units)
+
+        for i in range(n_round):
+
+            for j in range(self.hidden_units):
+
+                node_j = j + self.visible_units
+
+                self.input = self.one_gibbs(node_i= node_j)
+
+
+
+
+
+
 
 
 
