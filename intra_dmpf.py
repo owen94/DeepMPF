@@ -35,7 +35,7 @@ def mix_in(x, w, b, mix = 1):
 
 
 def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001,  batch_sz = 40, dataset = None,
-           n_round = 1):
+           n_round = 5):
 
     ################################################################
     ################## Loading the Data        #####################
@@ -186,7 +186,7 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001, 
 if __name__ == '__main__':
 
 
-    learning_rate_list = [0.001, 0.0001]
+    learning_rate_list = [0.001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
     hidden_units_list = [196]
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     beta_list = [0]
     sparsity_list = [0]
     batch_list = [40]
-    decay_list = [0, 0.1, 0.01, 0.001, 0.0001, 0.00001]
+    decay_list = [0,  0.01,  0.0001]
 
     for batch_size in batch_list:
         for n_samples in n_samples_list:
