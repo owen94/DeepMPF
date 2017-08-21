@@ -21,20 +21,20 @@ VISIBLE_UNITS = 784
 FEED_FIRST = True
 
 
-def mix_in(x, w, b, mix = 1):
+def mix_in(x, w, b, temp, mix = 1):
     vis_units = 784
     hid_units = x.shape[1] - vis_units
     for j in range(mix):
         for i in range(hid_units):
             input_w = w[:,vis_units + i]
             input_b = b[vis_units + i]
-            act = sigmoid(np.dot(x,input_w) + input_b)
+            act = sigmoid( 1/temp(np.dot(x,input_w) + input_b))
             h_i = np.random.binomial(n=1, p = act,size=act.shape)
             x[:,vis_units + i] = h_i
     return x
 
 
-def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001,  batch_sz = 40, dataset = None,
+def intra_dmpf(hidden_units,learning_rate, epsilon, temp, epoch = 50,  decay =0.0001,  batch_sz = 40, dataset = None,
            n_round = 1):
 
     ################################################################
@@ -80,6 +80,7 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001, 
         W = W,
         b = b,
         input = x,
+        temperature = temp,
         batch_sz =batch_sz)
 
 
@@ -161,13 +162,13 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001, 
 
                 for j in range(plot_every):
 
-                    downact1 = sigmoid(np.dot(h_samples,W1.T) + b_down )
+                    downact1 = sigmoid( 1/temp(np.dot(h_samples,W1.T) + b_down))
                     down_sample1 = np.random.binomial(n=1, p= downact1)
-                    upact1 = sigmoid(np.dot(down_sample1,W1)+b_up)
+                    upact1 = sigmoid(1/temp(np.dot(down_sample1,W1)+b_up))
                     h_samples = np.random.binomial(n=1,p=upact1)
                     # mix in here
                     x = np.concatenate((down_sample1,h_samples),axis=1)
-                    h_samples = mix_in(x=x,w=W,b=b)[:,visible_units:]
+                    h_samples = mix_in(x=x,w=W,b=b, temp=temp)[:,visible_units:]
 
                 print(' ... plotting sample ', idx)
 
@@ -183,7 +184,7 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, epoch = 50,  decay =0.0001, 
             image.save(path + '/samples_' + str(epoch_i) + '.png')
 
 if __name__ == '__main__':
-    learning_rate_list = [0.001]
+    learning_rate_list = [0.001, 0.0001]
     # hyper-parameters are: learning rate, num_samples, sparsity, beta, epsilon, batch_sz, epoches
     # Important ones: num_samples, learning_rate,
     hidden_units_list = [196]
@@ -198,5 +199,6 @@ if __name__ == '__main__':
             for hidden_units in hidden_units_list:
                 for decay in decay_list:
                     for learning_rate in learning_rate_list:
-                            intra_dmpf(hidden_units = hidden_units,learning_rate = learning_rate, epsilon = 0.01,decay=decay,
+                            intra_dmpf(hidden_units = hidden_units,learning_rate = learning_rate, epsilon = 0.01,
+                                       temp = 0.5, decay=decay,
                                    batch_sz=batch_size, n_round=1)
