@@ -191,7 +191,7 @@ if __name__ == '__main__':
     beta_list = [0]
     sparsity_list = [0]
     batch_list = [40]
-    decay_list = [0,  0.01,  0.0001]
+    decay_list = [0.0001]
 
     for batch_size in batch_list:
         for n_samples in n_samples_list:
