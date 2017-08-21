@@ -18,7 +18,7 @@ from utils_mpf import *
 class dmpf_optimizer(object):
 
     def __init__(self, visible_units = 784, hidden_units = 196, W = None, b = None,
-                 input = None, batch_sz = 20,
+                 input = None, batch_sz = 20, temperature = 0.5,
                  explicit_EM = True,theano_rng = None, epsilon = 0.01 ):
         '''
         :param visible_units:
@@ -61,6 +61,7 @@ class dmpf_optimizer(object):
 
         self.batch_sz = batch_sz
 
+        self.temp = temperature
 
         if not input:
             self.input = T.matrix('input')
@@ -167,8 +168,9 @@ class dmpf_optimizer(object):
         return cost, updates
 
     def propup(self, vis):
-        pre_sigmoid_activation = T.dot(vis, self.W[:self.visible_units,self.visible_units:]) \
-                                 + self.b[self.visible_units:]
+        # add temperature here
+        pre_sigmoid_activation = 1/self.temp * (T.dot(vis, self.W[:self.visible_units,self.visible_units:]) \
+                                 + self.b[self.visible_units:])
         return [pre_sigmoid_activation, T.nnet.sigmoid(pre_sigmoid_activation)]
 
     def np_propup(self, vis):
@@ -208,12 +210,15 @@ class dmpf_optimizer(object):
                 pre_sigmoid_v1, v1_mean, v1_sample]
 
 
-    def intra_dmpf_cost(self, n_round =1,learning_rate = 0.001, decay=0.0001, temperature = 0.5, feed_first = True):
+    def intra_dmpf_cost(self, n_round =1,learning_rate = 0.001, decay=0.0001, feed_first = True):
 
         # feed self.input only as the data samples
         self.asyc_gibbs(n_round=n_round, feedforward= feed_first) # update self.input
 
-        z = (1/2 - self.input) * temperature
+        # add temperature here
+        z = (1/2 - self.input) / self.temp
+
+
         energy_difference = z * (T.dot(self.input,self.W)+ self.b.reshape([1,-1]))
         cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
         cost_weight = 0.5 * decay * T.sum(self.W**2)
@@ -235,7 +240,7 @@ class dmpf_optimizer(object):
     def one_gibbs(self, node_i):
         input_w = self.W[:,node_i]
         input_b = self.b[node_i]
-        activations = T.nnet.sigmoid(T.dot(self.input,input_w) +input_b)
+        activations = T.nnet.sigmoid(1/self.temp * (T.dot(self.input,input_w) +input_b))
         flip = self.theano_rng.binomial(size=activations.shape,n=1,p=activations,dtype=theano.config.floatX)
         update_input = T.set_subtensor(self.input[:,node_i],flip)
         return update_input
