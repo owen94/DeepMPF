@@ -208,12 +208,12 @@ class dmpf_optimizer(object):
                 pre_sigmoid_v1, v1_mean, v1_sample]
 
 
-    def intra_dmpf_cost(self, n_round =1,learning_rate = 0.001, decay=0.0001, feed_first = True):
+    def intra_dmpf_cost(self, n_round =1,learning_rate = 0.001, decay=0.0001, temperature = 0.5, feed_first = True):
 
         # feed self.input only as the data samples
         self.asyc_gibbs(n_round=n_round, feedforward= feed_first) # update self.input
 
-        z = 1/2 - self.input
+        z = (1/2 - self.input) * temperature
         energy_difference = z * (T.dot(self.input,self.W)+ self.b.reshape([1,-1]))
         cost = (self.epsilon/self.batch_sz) * T.sum(T.exp(energy_difference))
         cost_weight = 0.5 * decay * T.sum(self.W**2)
@@ -235,14 +235,12 @@ class dmpf_optimizer(object):
     def one_gibbs(self, node_i):
         input_w = self.W[:,node_i]
         input_b = self.b[node_i]
-        activations = T.nnet.sigmoid( T.dot(self.input,input_w) +input_b)
+        activations = T.nnet.sigmoid(T.dot(self.input,input_w) +input_b)
         flip = self.theano_rng.binomial(size=activations.shape,n=1,p=activations,dtype=theano.config.floatX)
         update_input = T.set_subtensor(self.input[:,node_i],flip)
-
         return update_input
 
     def asyc_gibbs(self,n_round = 1, feedforward = False):
-
         if feedforward:
             activation = self.sample_h_given_v(v0_sample=self.input)
             hidden_samples = activation[2]
@@ -254,11 +252,8 @@ class dmpf_optimizer(object):
         #assert self.input.shape == (self.batch_sz,self.hidden_units + self.visible_units)
 
         for i in range(n_round):
-
             for j in range(self.hidden_units):
-
                 node_j = j + self.visible_units
-
                 self.input = self.one_gibbs(node_i= node_j)
 
 
