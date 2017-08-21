@@ -162,9 +162,9 @@ def intra_dmpf(hidden_units,learning_rate, epsilon, temp, epoch = 50,  decay =0.
 
                 for j in range(plot_every):
 
-                    downact1 = sigmoid( 1/temp(np.dot(h_samples,W1.T) + b_down))
+                    downact1 = sigmoid( 1/temp * (np.dot(h_samples,W1.T) + b_down))
                     down_sample1 = np.random.binomial(n=1, p= downact1)
-                    upact1 = sigmoid(1/temp(np.dot(down_sample1,W1)+b_up))
+                    upact1 = sigmoid(1/temp * (np.dot(down_sample1,W1)+b_up))
                     h_samples = np.random.binomial(n=1,p=upact1)
                     # mix in here
                     x = np.concatenate((down_sample1,h_samples),axis=1)
