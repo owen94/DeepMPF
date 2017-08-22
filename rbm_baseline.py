@@ -381,8 +381,8 @@ def test_rbm(learning_rate=0.01, training_epochs=200,
     #################################
 
     path = '../rbm_baseline/CD_1'
-    if not os.path.isdir(path):
-        os.mkdir(path)
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 
     lld_data = 'mnist.pkl.gz'
