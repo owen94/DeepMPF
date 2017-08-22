@@ -4,7 +4,7 @@
 
 from utils_mpf import *
 from PIL import Image
-from DBM import *
+from get_samples import get_samples
 
 # path1 = '../Thea_mpf/DBM/DBM_400_196_64/dbm_299.pkl'
 # savepath1 = '../Thea_mpf/DBM/DBM_400_196_64'
@@ -48,7 +48,7 @@ num_rbm = len(hidden_list) -1
 #     W.append(dbm4.W[i].get_value(borrow = True))
 #     b.append(dbm4.b[i].get_value(borrow = True))
 
-n_chains = 8
+n_chains = 15
 n_samples = 8
 plot_every = 5
 image_data = np.zeros(
@@ -78,14 +78,14 @@ feed_mean_activation = np.mean(feed_data, axis=0)
 a = np.load(savepath1 + 'seeds.npy')
 
 for idx in range(n_samples):
-    #persistent_vis_chain = np.random.binomial(n=1, p= feed_mean_activation, size=(n_chains, hidden_list[-1]))
+    persistent_vis_chain = np.random.binomial(n=1, p= feed_mean_activation, size=(n_chains, hidden_list[-1]))
     # persistent_vis_chain2 = np.random.binomial(n=1, p= feed_mean_activation, size=(n_chains, hidden_list[-1]))
     # persistent_vis_chain = (persistent_vis_chain + persistent_vis_chain2) % 2
     # print(persistent_vis_chain)
     #seeds += [persistent_vis_chain]
 
     #persistent_vis_chain = np.random.randint(2,size=(n_chains, hidden_list[-1]))
-    persistent_vis_chain = np.array([ a[0][4],a[1][4], a[3][3], a[4][3], a[7][0], a[7][1] ])
+    #persistent_vis_chain = np.array([ a[0][4],a[1][4], a[3][3], a[4][3], a[7][0], a[7][1] ])
 
 
     v_samples = persistent_vis_chain

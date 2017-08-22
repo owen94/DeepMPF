@@ -374,13 +374,13 @@ def test_rbm(learning_rate=0.01, training_epochs=200,
 
     # get the cost and the gradient corresponding to one step of CD-15
     cost, updates = rbm.get_cost_updates(lr=learning_rate,
-                                         persistent=persistent_chain, k=1)
+                                         persistent=None, k=1)
 
     #################################
     #     Training the RBM          #
     #################################
 
-    path = '../rbm_persistent/'
+    path = '../rbm_baseline/CD_1'
     if not os.path.isdir(path):
         os.mkdir(path)
 
@@ -418,6 +418,7 @@ def test_rbm(learning_rate=0.01, training_epochs=200,
     for epoch in range(training_epochs):
 
         # go through the training set
+        print('Training epoch')
         mean_cost = []
         for batch_index in range(int(n_train_batches)):
             mean_cost += [train_rbm(batch_index)]
@@ -428,47 +429,47 @@ def test_rbm(learning_rate=0.01, training_epochs=200,
         plotting_start = timeit.default_timer()
 
 
-        if epoch % 10 ==0:
-            W = rbm.W.get_value(borrow=True)
-            b_vis = rbm.vbias.get_value(borrow=True)
-            b_h = rbm.hbias.get_value(borrow=True)
-
-            lld_1 = []
-            lld_2 = []
-            for n_test_ll in range(1):
-
-                samples = for_gpu_sample(W=W, b0=b_vis,b1=b_h,train_data=training_data, n_steps=100)
-
-                image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
-                image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
-                    X= samples[:30,:],
-                    img_shape=(28, 28),
-                    tile_shape=(1, 30),
-                    tile_spacing=(1, 1)
-                        )
-                image = Image.fromarray(image_data)
-                image.show()
-                a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
-                a_lld = np.mean(np.array(a_lld))
-                lld_1  += [a_lld]
-
-                b_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
-                b_lld = np.mean(np.array(b_lld))
-                lld_2  += [b_lld]
-
-            print(lld_2)
-
-            train_lld += [np.mean(np.array(lld_1))]
-            train_std +=  [np.std(np.array(lld_1))]
-
-            test_lld += [np.mean(np.array(lld_2))]
-            test_std +=  [np.std(np.array(lld_2))]
-
-            print('the lld for epoch {} is train {} test {}'.format(epoch, train_lld[-1], test_lld[-1]))
-
+        # if epoch % 10 ==0:
+        #     W = rbm.W.get_value(borrow=True)
+        #     b_vis = rbm.vbias.get_value(borrow=True)
+        #     b_h = rbm.hbias.get_value(borrow=True)
+        #
+        #     lld_1 = []
+        #     lld_2 = []
+        #     for n_test_ll in range(1):
+        #
+        #         samples = for_gpu_sample(W=W, b0=b_vis,b1=b_h,train_data=training_data, n_steps=100)
+        #
+        #         image_data = np.zeros((29 * 1 + 1, 29 * 30 - 1), dtype='uint8')
+        #         image_data[29 * 0:29 * 0 + 28, :] = tile_raster_images(
+        #             X= samples[:30,:],
+        #             img_shape=(28, 28),
+        #             tile_shape=(1, 30),
+        #             tile_spacing=(1, 1)
+        #                 )
+        #         image = Image.fromarray(image_data)
+        #         image.show()
+        #         a_lld = get_ll(x=train_data[:10000], gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+        #         a_lld = np.mean(np.array(a_lld))
+        #         lld_1  += [a_lld]
+        #
+        #         b_lld = get_ll(x=test_data, gpu_parzen=gpu_parzen(mu=samples,sigma=0.2),batch_size=10)
+        #         b_lld = np.mean(np.array(b_lld))
+        #         lld_2  += [b_lld]
+        #
+        #     print(lld_2)
+        #
+        #     train_lld += [np.mean(np.array(lld_1))]
+        #     train_std +=  [np.std(np.array(lld_1))]
+        #
+        #     test_lld += [np.mean(np.array(lld_2))]
+        #     test_std +=  [np.std(np.array(lld_2))]
+        #
+        #     print('the lld for epoch {} is train {} test {}'.format(epoch, train_lld[-1], test_lld[-1]))
+        #
 
         # Construct image from the weight matrix
-        if epoch % 100 == 0:
+        if epoch % 20 == 0:
             image = Image.fromarray(
                 tile_raster_images(
                     X=rbm.W.get_value(borrow=True).T,
@@ -477,21 +478,35 @@ def test_rbm(learning_rate=0.01, training_epochs=200,
                     tile_spacing=(1, 1)
                 )
             )
-            image.save('filters_at_epoch_%i.png' % epoch)
+
+            W = rbm.W.get_value(borrow=True)
+            b_vis = rbm.vbias.get_value(borrow=True)
+            b_h = rbm.hbias.get_value(borrow=True)
+
+            w_path = path  + '/weights_' + str(epoch) + '.npy'
+            b_vis_path = path  + '/bvis_' + str(epoch) + '.npy'
+            b_hid_path = path  + '/bhid_' + str(epoch) + '.npy'
+
+            np.save(w_path, W)
+            np.save(b_vis_path, b_vis)
+            np.save(b_hid_path, b_h)
+
+            filter_path = path + '/filters_' + str(epoch) + '.png'
+            image.save(filter_path)
             plotting_stop = timeit.default_timer()
             plotting_time += (plotting_stop - plotting_start)
 
     end_time = timeit.default_timer()
-
-    path_train_lld = path + 'train_lld.npy'
-    path_train_std = path + 'train_std.npy'
-    np.save(path_train_lld, train_lld)
-    np.save(path_train_std, train_std)
-
-    path_test_lld = path + 'test_lld.npy'
-    path_test_std = path + 'test_std.npy'
-    np.save(path_test_lld, test_lld)
-    np.save(path_test_std, test_std)
+    #
+    # path_train_lld = path + 'train_lld.npy'
+    # path_train_std = path + 'train_std.npy'
+    # np.save(path_train_lld, train_lld)
+    # np.save(path_train_std, train_std)
+    #
+    # path_test_lld = path + 'test_lld.npy'
+    # path_test_std = path + 'test_std.npy'
+    # np.save(path_test_lld, test_lld)
+    # np.save(path_test_std, test_std)
 
     pretraining_time = (end_time - start_time) - plotting_time
 
